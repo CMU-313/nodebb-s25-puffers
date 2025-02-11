@@ -1,4 +1,3 @@
-
 'use strict';
 
 
@@ -128,30 +127,15 @@ define('forum/topic/events', [
 			return parseInt($(el).closest('[data-pid]').attr('data-pid'), 10) === parseInt(data.post.pid, 10);
 		});
 		const postContainer = $(`[data-pid="${data.post.pid}"]`);
-		const editorEl = postContainer.find('[component="post/editor"]').filter(function (index, el) {
-			return parseInt($(el).closest('[data-pid]').attr('data-pid'), 10) === parseInt(data.post.pid, 10);
-		});
-		const topicTitle = components.get('topic/title');
-		const navbarTitle = components.get('navbar/title').find('span');
-		const breadCrumb = components.get('breadcrumb/current');
+		const editorEl = postContainer.find('[component="post/editor"]');
 
-		if (data.topic.rescheduled) {
-			return ajaxify.go('topic/' + data.topic.slug, null, true);
-		}
-
-		if (topicTitle.length && data.topic.title && data.topic.renamed) {
+		if (data.topic.renamed) {
 			ajaxify.data.title = data.topic.title;
 			const newUrl = 'topic/' + data.topic.slug + (window.location.search ? window.location.search : '');
 			history.replaceState({ url: newUrl }, null, window.location.protocol + '//' + window.location.host + config.relative_path + '/' + newUrl);
 
-			topicTitle.fadeOut(250, function () {
-				topicTitle.html(data.topic.title).fadeIn(250);
-			});
-			breadCrumb.fadeOut(250, function () {
-				breadCrumb.html(data.topic.title).fadeIn(250);
-			});
-			navbarTitle.fadeOut(250, function () {
-				navbarTitle.html(data.topic.title).fadeIn(250);
+			components.get('topic/title').fadeOut(250, function () {
+				$(this).html(data.topic.title).fadeIn(250);
 			});
 		}
 
@@ -164,40 +148,18 @@ define('forum/topic/events', [
 				editedPostEl.fadeIn(250);
 
 				if (data.post.edited) {
-					//Modifed this line to have the edit time
 					const editData = {
 						editor: data.editor,
-						editedISO: utils.toISOString(data.post.edited),
-						editTime: data.post.edited 
+						editedISO: utils.toISOString(data.post.edited)
 					};
+					
 					app.parseAndTranslate('partials/topic/post-editor', editData, function (html) {
 						editorEl.replaceWith(html);
-						
-						const editTimeEl = postContainer.find('[component="post/edit-time"]');
-						function updateEditTime() {
-							const timeDiff = getTimeDifference(data.post.edited);
-							editTimeEl.text(`Last edited ${timeDiff}`);
-						}
-						updateEditTime();
-						
-						// Update every minute
-						const updateInterval = setInterval(updateEditTime, 60000);
-						
-						editTimeEl.on('remove', function() {
-							clearInterval(updateInterval);
-						});
-						
-						postContainer.find('[component="post/edit-indicator"]')
-							.removeClass('hidden')
-							.translateAttr('title', `[[global:edited-timestamp, ${helpers.isoTimeToLocaleString(editData.editedISO, config.userLang)}]]`);
-						
-						postContainer.find('[component="post/editor"] .timeago').timeago();
+						$('[component="post/editor"] .timeago').timeago();
 						hooks.fire('action:posts.edited', data);
 					});
 				}
 			});
-		} else {
-			hooks.fire('action:posts.edited', data);
 		}
 
 		if (data.topic.tags && data.topic.tagsupdated) {

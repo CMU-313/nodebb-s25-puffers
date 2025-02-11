@@ -42,7 +42,7 @@
 				{{{ if posts.editor.username }}}
 				<span class="text-muted">
 					&bull;
-					<span>last edited: </span>
+					<span>Last Edited: </span>
 					<span class="timeago" title="{isoTimeToLocaleString(posts.editedISO, config.userLang)}">[[global:edited]]</span>
 					<i component="post/edit-indicator" class="fa fa-edit text-muted{{{ if privileges.posts:history }}} pointer{{{ end }}}" title="[[global:edited-by, {posts.editor.username}]]"></i>
 				</span>
