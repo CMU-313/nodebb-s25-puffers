@@ -13,6 +13,27 @@ const pubsub = require('../pubsub');
 const utils = require('../utils');
 const slugify = require('../slugify');
 const translator = require('../translator');
+const moment = require('moment');
+
+
+function calculateTimeSinceEdit(editTime){
+	const now = moment();
+	const editedMoment = moment(editTime);
+	const diffMinutes = now.diff(editedMoment, 'minutes');
+
+	if (diffMinutes < 60){
+		return `${diffMinutes} minutes ago`;
+
+	}
+
+	const diffHours = Math.floor(diffMinutes/60);
+	if (diffHours < 24){
+		return `${diffHours} hours ago`;
+	}
+
+	const diffDays = Math.floor(diffHours / 24);
+		return `${diffDays} days ago`;
+}
 
 module.exports = function (Posts) {
 	pubsub.on('post:edit', (pid) => {
@@ -74,14 +95,22 @@ module.exports = function (Posts) {
 		// Normalize data prior to constructing returnPostData (match types with getPostSummaryByPids)
 		postData.deleted = !!postData.deleted;
 
+		const moment = require('moment');
+		
+		
 		const returnPostData = { ...postData, ...result.post };
 		returnPostData.cid = topic.cid;
 		returnPostData.topic = topic;
-		returnPostData.editedISO = utils.toISOString(editPostData.edited);
+		
+		//returnPostData.editedISO = utils.toISOString(editPostData.edited);
+		returnPostData.editedTimeAgo = calculateTimeSinceEdit(editPostData.edited);
 		returnPostData.changed = contentChanged;
 		returnPostData.oldContent = oldContent;
 		returnPostData.newContent = data.content;
+		
+		
 
+		
 		await topics.notifyFollowers(returnPostData, data.uid, {
 			type: 'post-edit',
 			bodyShort: translator.compile('notifications:user-edited-post', editor.username, topic.title),
@@ -102,6 +131,11 @@ module.exports = function (Posts) {
 			post: returnPostData,
 		};
 	};
+
+	//new code
+	
+
+
 
 	async function editMainPost(data, postData, topicData) {
 		const { tid } = postData;
@@ -145,8 +179,7 @@ module.exports = function (Posts) {
 		const results = await plugins.hooks.fire('filter:topic.edit', {
 			req: data.req,
 			topic: newTopicData,
-			data: data,
-		});
+			data: data,});
 		await db.setObject(`topic:${tid}`, results.topic);
 		if (tagsupdated) {
 			await topics.updateTopicTags(tid, data.tags);
