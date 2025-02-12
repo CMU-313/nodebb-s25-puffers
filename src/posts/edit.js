@@ -73,15 +73,7 @@ module.exports = function (Posts) {
 
 		// Normalize data prior to constructing returnPostData (match types with getPostSummaryByPids)
 		postData.deleted = !!postData.deleted;
-
-
-		//Incorporate Edit Time From Edit Controller
-		const returnPostData = { 
-			...postData, 
-			...result.post,
-			editTime: editPostData.edited,
-		};
-
+		const returnPostData = { ...postData, ...result.post, editTime: editPostData.edited };
 		returnPostData.cid = topic.cid;
 		returnPostData.topic = topic;
 		returnPostData.editedISO = utils.toISOString(editPostData.edited);

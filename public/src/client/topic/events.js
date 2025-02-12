@@ -9,8 +9,7 @@ define('forum/topic/events', [
 	'components',
 	'translator',
 	'hooks',
-	'helpers',
-], function (postTools, threadTools, posts, images, components, translator, hooks, helpers) {
+], function (postTools, threadTools, posts, images, components, translator, hooks) {
 	const Events = {};
 
 	const events = {
@@ -99,26 +98,6 @@ define('forum/topic/events', [
 		}
 	}
 
-
-	//Copilot for function to get time difference
-	function getTimeDifference(timestamp) {
-		const now = Date.now();
-		const diff = now - timestamp;
-		
-		const minutes = Math.floor(diff / 60000);
-		const hours = Math.floor(diff / 3600000);
-		const days = Math.floor(diff / 86400000);
-		
-		if (minutes < 60) {
-			return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
-		} else if (hours < 24) {
-			return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
-		} else {
-			return days === 1 ? '1 day ago' : `${days} days ago`;
-		}
-	}
-	
-
 	function onPostEdited(data) {
 		if (!data || !data.post || parseInt(data.post.tid, 10) !== parseInt(ajaxify.data.tid, 10)) {
 			return;
@@ -150,9 +129,8 @@ define('forum/topic/events', [
 				if (data.post.edited) {
 					const editData = {
 						editor: data.editor,
-						editedISO: utils.toISOString(data.post.edited)
+						editedISO: utils.toISOString(data.post.edited),
 					};
-					
 					app.parseAndTranslate('partials/topic/post-editor', editData, function (html) {
 						editorEl.replaceWith(html);
 						$('[component="post/editor"] .timeago').timeago();
