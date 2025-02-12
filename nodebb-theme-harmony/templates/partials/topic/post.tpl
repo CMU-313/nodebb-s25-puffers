@@ -59,8 +59,10 @@
 			</div>
 		</div>
 
+		<!-- Content Section Modified for Word Count -->
 		<div class="content mt-2 text-break" component="post/content" itemprop="text">
-			{posts.content}
+			<textarea id="post-content" name="content" placeholder="Type your post here..." rows="6" class="form-control"></textarea>
+			<div id="word-count" class="text-muted mt-2">Word Count: 0</div>
 		</div>
 	</div>
 </div>

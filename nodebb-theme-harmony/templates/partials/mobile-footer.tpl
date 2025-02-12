@@ -5,6 +5,7 @@
 	<div class="bottombar-nav p-2 text-dark bg-light d-flex justify-content-between align-items-center w-100">
 		<div class="bottombar-nav-left d-flex gap-3 align-items-center">
 			<div>
+				<p style="color: red; font-weight: bold;">This is a test sentence!</p> 
 				<a href="#" role="button" class="nav-link d-flex justify-content-between align-items-center position-relative" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 					<span class="position-relative">
 						<i class="fa fa-fw fa-lg fa-bars"></i>
@@ -40,6 +41,7 @@
 			</div>
 		</div>
 		<div class="bottombar-nav-right d-flex gap-3 align-items-center">
+			<p style="color: red; font-weight: bold;">This is a test sentence!</p> 
 			<div>
 				{{{ if config.loggedIn }}}
 				<ul id="logged-in-menu" class="list-unstyled d-flex align-items-center w-100 gap-3 mb-0">
@@ -91,6 +93,9 @@
 				</ul>
 				{{{ end }}}
 			</div>
+			<p style="color: red; font-weight: bold;">This is a test sentence!</p> 
 		</div>
+		<p style="color: red; font-weight: bold;">This is a test sentence!</p> 
 	</div>
+	<p style="color: red; font-weight: bold;">This is a test sentence!</p> 
 </div>
