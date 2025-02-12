@@ -11,6 +11,7 @@
 		<input type="hidden" name="_csrf" value="{config.csrf_token}" />
 		<div class="quickreply-message position-relative">
 			<textarea rows="4" name="content" component="topic/quickreply/text" class="form-control mousetrap" placeholder="[[modules:composer.textarea.placeholder]]"></textarea>
+			<div id="word-count" class="word-count" style="font-size: 14px; color: #666; margin-top: 5px;">Words: 0</div>
 			<div class="imagedrop"><div>[[topic:composer.drag-and-drop-images]]</div></div>
 		</div>
 		<div>
@@ -23,6 +24,5 @@
 	<form class="d-none" component="topic/quickreply/upload" method="post" enctype="multipart/form-data">
 		<input type="file" name="files[]" multiple class="hidden"/>
 	</form>
-
 </div>
 {{{ end }}}
