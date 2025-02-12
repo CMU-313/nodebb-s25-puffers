@@ -48,6 +48,7 @@ exports.post = async function (req, res) {
 		content: body.content,
 		handle: body.handle,
 		fromQueue: false,
+		wordCount: body.content.split(/\s+/).filter(word => word.length > 0).length,
 	};
 	req.body.noscript = 'true';
 

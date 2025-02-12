@@ -13,12 +13,14 @@ const privileges = require('../privileges');
 
 module.exports = function (Posts) {
 	Posts.create = async function (data) {
+		console.log("Post WC")
 		// This is an internal method, consider using Topics.reply instead
 		const { uid } = data;
 		const { tid } = data;
 		const content = data.content.toString();
 		const timestamp = data.timestamp || Date.now();
 		const isMain = data.isMain || false;
+		const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
 
 		if (!uid && parseInt(uid, 10) !== 0) {
 			throw new Error('[[error:invalid-uid]]');
@@ -35,6 +37,7 @@ module.exports = function (Posts) {
 			tid: tid,
 			content: content,
 			timestamp: timestamp,
+			wordCount: wordCount,
 		};
 
 		if (data.toPid) {
