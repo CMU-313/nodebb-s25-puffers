@@ -7,5 +7,6 @@
             <span class="timeago text-xs" title="{post.timestampISO}"></span>
         </div>
         <div class="content">{post.content}</div>
+        <div class="content">{post.wordCount}</div>
     </div>
 </div>
