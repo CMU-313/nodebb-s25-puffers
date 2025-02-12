@@ -13,6 +13,7 @@ define('forum/topic/events', [
 	'helpers',
 ], function (postTools, threadTools, posts, images, components, translator, hooks, helpers) {
 	const Events = {};
+	const moment = window.moment || require('moment');
 
 	const events = {
 		'event:user_status_change': onUserStatusChange,
@@ -135,6 +136,7 @@ define('forum/topic/events', [
 			});
 		}
 
+		//change code
 		if (data.post.changed) {
 			editedPostEl.fadeOut(250, function () {
 				editedPostEl.html(translator.unescape(data.post.content));
@@ -146,17 +148,37 @@ define('forum/topic/events', [
 				if (data.post.edited) {
 					const editData = {
 						editor: data.editor,
-						editedISO: utils.toISOString(data.post.edited),
+						//editedISO: utils.toISOString(data.post.edited),
+						editedTimeAgo: data.post.editedTimeAgo,
 					};
 
+					// app.parseAndTranslate('partials/topic/post-editor', editData, function (html) {
+					// 	editorEl.replaceWith(html);
+					// 	postContainer.find('[component="post/edit-indicator"]')
+					// 		.removeClass('hidden')
+					// 		.translateAttr('title', `[[global:edited-timestamp, ${helpers.isoTimeToLocaleString(editData.editedISO, config.userLang)}]]`);
+					// 	postContainer.find('[component="post/editor"] .timeago').timeago();
+					// 	hooks.fire('action:posts.edited', data);
+					// });
+					// app.parseAndTranslate('partials/topic/post-editor', editData, function (html) {
+					// 	editorEl.replaceWith(html);
+						
+					// 	// Update the edit indicator with relative time instead of a timestamp
+					// 	postContainer.find('[component="post/edit-indicator"]')
+					// 		.removeClass('hidden')
+					// 		.text(`Edited: ${editData.editedTimeAgo}`); // Shows "X minutes/hours ago"
+					
+					// 	hooks.fire('action:posts.edited', data);
+					// });
 					app.parseAndTranslate('partials/topic/post-editor', editData, function (html) {
 						editorEl.replaceWith(html);
 						postContainer.find('[component="post/edit-indicator"]')
 							.removeClass('hidden')
-							.translateAttr('title', `[[global:edited-timestamp, ${helpers.isoTimeToLocaleString(editData.editedISO, config.userLang)}]]`);
-						postContainer.find('[component="post/editor"] .timeago').timeago();
+							.text(`Edited: ${editData.editedTimeAgo}`); // Directly set "X minutes/hours ago"
+					
 						hooks.fire('action:posts.edited', data);
 					});
+				
 				}
 			});
 		} else {
