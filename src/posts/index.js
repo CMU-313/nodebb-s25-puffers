@@ -50,6 +50,10 @@ Posts.getPostsByPids = async function (pids, uid) {
 	if (!data || !Array.isArray(data.posts)) {
 		return [];
 	}
+	posts.forEach(post => {
+		post.editedISO = post.edited ? new Date(post.edited).toISOString() : null;
+	});
+	
 	return data.posts.filter(Boolean);
 };
 
