@@ -99,6 +99,19 @@
 	<div component="post/replies/container" class="my-2 col-11 border rounded-1 p-3 hidden-empty"></div>
 
 	<div component="post/actions" class="d-flex justify-content-end gap-1 post-tools">
+		<div class="quick-reactions btn-group">
+			<button type="button" class="btn btn-ghost-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+				<i class="fa fa-smile-o text-primary"></i>
+			</button>
+			<ul class="dropdown-menu quick-reactions-menu">
+				<li><button class="dropdown-item" data-emoji="👍">👍 Like</button></li>
+				<li><button class="dropdown-item" data-emoji="❤️">❤️ Love</button></li>
+				<li><button class="dropdown-item" data-emoji="😄">😄 Haha</button></li>
+				<li><button class="dropdown-item" data-emoji="😮">😮 Wow</button></li>
+				<li><button class="dropdown-item" data-emoji="😢">😢 Sad</button></li>
+				<li><button class="dropdown-item" data-emoji="😡">😡 Angry</button></li>
+			</ul>
+		</div>
 		<!-- IMPORT partials/topic/reactions.tpl -->
 		<a component="post/reply" href="#" class="btn-ghost-sm {{{ if !privileges.topics:reply }}}hidden{{{ end }}}" title="[[topic:reply]]"><i class="fa fa-fw fa-reply text-primary"></i></a>
 		<a component="post/quote" href="#" class="btn-ghost-sm {{{ if !privileges.topics:reply }}}hidden{{{ end }}}" title="[[topic:quote]]"><i class="fa fa-fw fa-quote-right text-primary"></i></a>

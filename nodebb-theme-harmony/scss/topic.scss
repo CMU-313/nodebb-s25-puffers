@@ -137,3 +137,18 @@ body.template-topic {
 		}
 	}
 }
+
+.quick-reactions {
+	.dropdown-menu {
+		min-width: 120px;
+	}
+	
+	.dropdown-item {
+		cursor: pointer;
+		padding: 0.25rem 1rem;
+		
+		&:hover {
+			background-color: var(--bs-light);
+		}
+	}
+}

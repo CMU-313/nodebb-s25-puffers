@@ -199,6 +199,20 @@ define('forum/topic/postTools', [
 			}
 		});
 
+		postContainer.on('click', '.quick-reactions-menu .dropdown-item', function() {
+			const emoji = $(this).data('emoji');
+			const pid = getData($(this).closest('[component="post"]'), 'data-pid');
+			
+			socket.emit('posts.react', {
+				pid: pid,
+				reaction: emoji
+			}, function(err) {
+				if (err) {
+					return alerts.error(err);
+				}
+			});
+		});
+
 		function checkDuration(duration, postTimestamp, languageKey) {
 			if (!ajaxify.data.privileges.isAdminOrMod && duration && Date.now() - postTimestamp > duration * 1000) {
 				const numDays = Math.floor(duration / 86400);
