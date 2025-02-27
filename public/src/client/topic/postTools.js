@@ -212,6 +212,27 @@ define('forum/topic/postTools', [
 				}
 			});
 		});
+		
+		//generated with Claude
+		postContainer.on('click', '.reaction-btn', function() {
+			const pid = getData($(this).closest('[component="post"]'), 'data-pid');
+			const emoji = $(this).data('emoji');
+			
+			socket.emit('posts.react', {
+				pid: pid,
+				reaction: emoji
+			}, function(err, result) {
+				if (err) {
+					return alerts.error(err);
+				}
+				
+				// Update reaction display
+				const reactionContainer = $(`[component="post"][data-pid="${pid}"] [component="post/reactions"]`);
+				app.parseAndTranslate('partials/topic/post-reactions', { reactions: result.reactions }, function(html) {
+					reactionContainer.html(html);
+				});
+			});
+		});
 
 		function checkDuration(duration, postTimestamp, languageKey) {
 			if (!ajaxify.data.privileges.isAdminOrMod && duration && Date.now() - postTimestamp > duration * 1000) {

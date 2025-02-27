@@ -69,6 +69,7 @@
 			{posts.content}
 		</div>
 	</div>
+	<!-- IMPORT partials/topic/post-reactions.tpl -->
 </div>
 
 <div component="post/footer" class="post-footer border-bottom pb-2">
