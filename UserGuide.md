@@ -185,3 +185,5 @@ To test the Dark Mode functionality, follow these steps:
 ## Conclusion
 
 The Dark Mode feature enhances the user experience by offering a visually comfortable viewing option. With thorough testing, we ensure the feature is fully functional and consistent across different platforms.
+
+
