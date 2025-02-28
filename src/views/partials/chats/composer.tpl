@@ -6,7 +6,10 @@
 		<button component="chat/upload/button" class="btn-ghost-sm px-2" type="button" title="[[global:upload]]" data-bs-toggle="tooltip"><i class="fa fa-fw fa-upload"></i></button>
 		<div class="flex-grow-1 align-self-center">
 			<textarea component="chat/input" placeholder="[[modules:chat.placeholder.mobile]]" class="bg-transparent text-body form-control chat-input mousetrap rounded-0 border-0 shadow-none px-1 py-0" style="min-height: 1.5rem;height:0;max-height:30vh;resize:none;"></textarea>
+			<!-- Word Count Display -->
+			<div class="text-muted text-xs mt-1" id="word-count-display">Words: 0</div>
 		</div>
+
 		<div class="d-flex gap-1">
 			{{{ each composerActions }}}
 			<button data-action="{./action}" class="btn-ghost-sm px-2 {./class}" type="button" title="{./title}" data-bs-toggle="tooltip"><i class="fa {./icon}"></i></button>

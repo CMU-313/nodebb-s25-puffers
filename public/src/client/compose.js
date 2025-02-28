@@ -17,18 +17,23 @@ define('forum/compose', ['hooks'], function (hooks) {
 	};
 
 	function addWordCount(container) {
-		// Create the word count element
-		const wordCountContainer = $('<div class="word-count">Words: <span id="word-count">0</span></div>');
-		container.append(wordCountContainer);
-
-		// Attach event listener to the textarea
+		// Find the textarea
 		const textarea = container.find('textarea');
+	
+		// Find or create the word count display
+		let wordCountContainer = container.find('#word-count-display');
+		if (!wordCountContainer.length) {
+			wordCountContainer = $('<div class="text-muted text-xs mt-1" id="word-count-display">Words: 0</div>');
+			textarea.after(wordCountContainer);
+		}
+	
+		// Attach event listener to update word count
 		textarea.on('input', function () {
 			const text = $(this).val().trim();
 			const wordCount = text.length > 0 ? text.split(/\s+/).length : 0;
-			$('#word-count').text(wordCount);
+			wordCountContainer.text(`Words: ${wordCount}`);
 		});
-	}
+	}	
 
 	return Compose;
 });
