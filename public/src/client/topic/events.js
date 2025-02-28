@@ -13,6 +13,7 @@ define('forum/topic/events', [
 	'helpers',
 ], function (postTools, threadTools, posts, images, components, translator, hooks, helpers) {
 	const Events = {};
+	const moment = window.moment || require('moment');
 
 	const events = {
 		'event:user_status_change': onUserStatusChange,
@@ -46,6 +47,9 @@ define('forum/topic/events', [
 
 		'event:new_notification': onNewNotification,
 		'event:new_post': posts.onNewPost,
+
+		'event:post_reacted': updatePostReactions,
+		'posts.reaction': updatePostReactions,
 	};
 
 	Events.init = function () {
@@ -135,6 +139,7 @@ define('forum/topic/events', [
 			});
 		}
 
+		//change code
 		if (data.post.changed) {
 			editedPostEl.fadeOut(250, function () {
 				editedPostEl.html(translator.unescape(data.post.content));
@@ -146,17 +151,37 @@ define('forum/topic/events', [
 				if (data.post.edited) {
 					const editData = {
 						editor: data.editor,
-						editedISO: utils.toISOString(data.post.edited),
+						//editedISO: utils.toISOString(data.post.edited),
+						editedTimeAgo: data.post.editedTimeAgo,
 					};
 
+					// app.parseAndTranslate('partials/topic/post-editor', editData, function (html) {
+					// 	editorEl.replaceWith(html);
+					// 	postContainer.find('[component="post/edit-indicator"]')
+					// 		.removeClass('hidden')
+					// 		.translateAttr('title', `[[global:edited-timestamp, ${helpers.isoTimeToLocaleString(editData.editedISO, config.userLang)}]]`);
+					// 	postContainer.find('[component="post/editor"] .timeago').timeago();
+					// 	hooks.fire('action:posts.edited', data);
+					// });
+					// app.parseAndTranslate('partials/topic/post-editor', editData, function (html) {
+					// 	editorEl.replaceWith(html);
+						
+					// 	// Update the edit indicator with relative time instead of a timestamp
+					// 	postContainer.find('[component="post/edit-indicator"]')
+					// 		.removeClass('hidden')
+					// 		.text(`Edited: ${editData.editedTimeAgo}`); // Shows "X minutes/hours ago"
+					
+					// 	hooks.fire('action:posts.edited', data);
+					// });
 					app.parseAndTranslate('partials/topic/post-editor', editData, function (html) {
 						editorEl.replaceWith(html);
 						postContainer.find('[component="post/edit-indicator"]')
 							.removeClass('hidden')
-							.translateAttr('title', `[[global:edited-timestamp, ${helpers.isoTimeToLocaleString(editData.editedISO, config.userLang)}]]`);
-						postContainer.find('[component="post/editor"] .timeago').timeago();
+							.text(`Edited: ${editData.editedTimeAgo}`); // Directly set "X minutes/hours ago"
+					
 						hooks.fire('action:posts.edited', data);
 					});
+				
 				}
 			});
 		} else {
@@ -237,6 +262,13 @@ define('forum/topic/events', [
 		if (data && data.tid && parseInt(data.tid, 10) === parseInt(tid, 10)) {
 			socket.emit('topics.markTopicNotificationsRead', [tid]);
 		}
+	}
+
+	function updatePostReactions(data) {
+		const reactionContainer = $(`[component="post"][data-pid="${data.pid}"] [component="post/reactions"]`);
+		app.parseAndTranslate('partials/topic/post-reactions', { reactions: data.reactions }, function (html) {
+			reactionContainer.html(html);
+		});
 	}
 
 	return Events;
