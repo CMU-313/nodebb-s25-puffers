@@ -1,10 +1,8 @@
 # User Guide
 
+## Feature 1: Emoji Reactions Feature
 
-
-### Feature 1: Emoji Reactions Feature
-
-## Overview
+### Overview
 
 The Emoji Reactions feature allows users to react to posts with a selection of emojis. Users can add, remove, and view reactions in real time, enhancing engagement on the platform.
 
