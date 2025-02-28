@@ -65,10 +65,18 @@
 
 		<h6 class="fw-bold">[[user:browsing]]</h6>
 
+		
 		<div class="form-check form-switch">
 			<input class="form-check-input" type="checkbox" role="switch" id="openOutgoingLinksInNewTab" data-property="openOutgoingLinksInNewTab" {{{ if settings.openOutgoingLinksInNewTab }}}checked{{{ end }}}/>
 			<label class="form-check-label text-sm" for="openOutgoingLinksInNewTab">[[user:open-links-in-new-tab]]</label>
 		</div>
+
+		<div class="form-check form-switch">
+			<input class="form-check-input" type="checkbox" id="darkModeToggle" data-property="darkMode" {{{ if settings.darkMode }}}checked{{{ end }}}/>
+			<label class="form-check-label text-sm" for="darkModeToggle">Enable Dark Mode</label>
+		</div>
+
+
 
 		{{{ if inTopicSearchAvailable }}}
 		<div class="form-check form-switch">
@@ -92,6 +100,11 @@
 
 		<h6 class="fw-bold">[[global:pagination]]</h6>
 
+		<div class="form-check form-switch">
+			<input class="form-check-input" type="checkbox" role="switch" id="darkModeToggle" data-property="darkMode" {{{ if settings.darkMode }}}checked{{{ end }}}/>
+			<label class="form-check-label text-sm" for="darkModeToggle">Enable Dark Mode</label>
+		</div>
+		
 		<div class="mb-2 form-check form-switch">
 			<input type="checkbox" role="switch" id="usePagination" class="form-check-input" data-property="usePagination" {{{ if settings.usePagination }}}checked{{{ end }}}>
 			<label class="form-check-label text-sm" for="usePagination">[[user:paginate-description]]</label>

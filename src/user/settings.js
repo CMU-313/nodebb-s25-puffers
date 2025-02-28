@@ -24,8 +24,10 @@ module.exports = function (User) {
 		let settings = await db.getObject(`user:${uid}:settings`);
 		settings = settings || {};
 		settings.uid = uid;
+		settings.darkMode = settings.darkMode || false;  // Retrieve dark mode setting
 		return await onSettingsLoaded(uid, settings);
 	};
+	
 
 	User.getMultipleUserSettings = async function (uids) {
 		if (!Array.isArray(uids) || !uids.length) {
@@ -148,6 +150,7 @@ module.exports = function (User) {
 			categoryWatchState: data.categoryWatchState,
 			categoryTopicSort: data.categoryTopicSort,
 			topicPostSort: data.topicPostSort,
+			darkMode: data.darkMode || false,  // Save dark mode preference
 		};
 		const notificationTypes = await notifications.getAllNotificationTypes();
 		notificationTypes.forEach((notificationType) => {
@@ -172,7 +175,9 @@ module.exports = function (User) {
 		if (parseInt(uid, 10) <= 0) {
 			return;
 		}
-
+		if (key === 'darkMode') {
+			value = value ? true : false; // Ensure it's a boolean
+		}
 		await db.setObjectField(`user:${uid}:settings`, key, value);
 	};
 };

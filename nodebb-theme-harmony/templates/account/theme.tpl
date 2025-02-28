@@ -59,6 +59,13 @@
 		</label>
 	</div>
 
+	<div class="form-check form-switch mb-3">
+		<input class="form-check-input" type="checkbox" role="switch" id="darkModeToggle" name="darkMode" {{{ if theme.darkMode }}}checked{{{ end }}}>
+		<label class="form-check-label" for="darkModeToggle">
+			Enable Dark Mode
+		</label>
+	</div>
+
 </form>
 
 <!-- IMPORT partials/account/footer.tpl -->
