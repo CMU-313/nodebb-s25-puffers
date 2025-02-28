@@ -137,3 +137,47 @@ body.template-topic {
 		}
 	}
 }
+
+.quick-reactions {
+	.dropdown-menu {
+		min-width: 120px;
+	}
+	
+	.dropdown-item {
+		cursor: pointer;
+		padding: 0.25rem 1rem;
+		
+		&:hover {
+			background-color: var(--bs-light);
+		}
+	}
+}
+
+.post-reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    
+    .reaction-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 1rem;
+        
+        &.reacted {
+            background-color: var(--bs-primary-bg-subtle);
+            border-color: var(--bs-primary);
+            color: var(--bs-primary);
+        }
+        
+        .reaction-emoji {
+            font-size: 1.1em;
+        }
+        
+        .reaction-count {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+    }
+}

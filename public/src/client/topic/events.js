@@ -47,6 +47,9 @@ define('forum/topic/events', [
 
 		'event:new_notification': onNewNotification,
 		'event:new_post': posts.onNewPost,
+
+		'event:post_reacted': updatePostReactions,
+		'posts.reaction': updatePostReactions,
 	};
 
 	Events.init = function () {
@@ -259,6 +262,13 @@ define('forum/topic/events', [
 		if (data && data.tid && parseInt(data.tid, 10) === parseInt(tid, 10)) {
 			socket.emit('topics.markTopicNotificationsRead', [tid]);
 		}
+	}
+
+	function updatePostReactions(data) {
+		const reactionContainer = $(`[component="post"][data-pid="${data.pid}"] [component="post/reactions"]`);
+		app.parseAndTranslate('partials/topic/post-reactions', { reactions: data.reactions }, function (html) {
+			reactionContainer.html(html);
+		});
 	}
 
 	return Events;
