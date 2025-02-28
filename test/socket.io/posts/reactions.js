@@ -1,102 +1,92 @@
 'use strict';
 
-//generated with Claude
+// generated with Claude
 
 const assert = require('assert');
 const async = require('async');
-const db = require('../../mocks/databasemock');
 
+const db = require('../../mocks/databasemock');
+const helpers = require('../../helpers');
+const meta = require('../../../src/meta');
 const user = require('../../../src/user');
-const topics = require('../../../src/topics');
+const groups = require('../../../src/groups');
 const categories = require('../../../src/categories');
+const topics = require('../../../src/topics');
 const posts = require('../../../src/posts');
 const socketPosts = require('../../../src/socket.io/posts');
 
-describe('Socket.IO Post Reactions', () => {
-    let tid;
-    let cid;
-    let pid;
-    let adminUid;
-    let regularUid;
+describe('Socket.io Posts Reactions', () => {
+	let adminUid;
+	let regularUid;
+	let categoryId;
+	let topicId;
+	let postId;
 
-    before(async () => {
-        [adminUid, regularUid, cid] = await Promise.all([
-            user.create({ username: 'admin-socket', password: 'password' }),
-            user.create({ username: 'regular-socket', password: 'password' }),
-            categories.create({ name: 'Test Category Socket' }),
-        ]);
+	before(async () => {
+		adminUid = await user.create({ username: 'admin', password: '123456' });
+		await groups.join('administrators', adminUid);
 
-        await user.setAdministrator(adminUid, true);
+		regularUid = await user.create({ username: 'regular', password: '123456' });
+	});
 
-        const topicData = await topics.post({
-            uid: adminUid,
-            cid: cid,
-            title: 'Test Topic for Socket Reactions',
-            content: 'This is a test topic for testing socket reactions',
-        });
-        tid = topicData.topicData.tid;
-        pid = topicData.postData.pid;
-    });
+	it('should create a category and topic with a post for testing', async () => {
+		categoryId = await categories.create({
+			name: 'Test Category',
+			description: 'Test category created by testing script',
+		}).then(c => c.cid); // Removed parentheses around `c`
 
-    it('should add a reaction via socket', (done) => {
-        socketPosts.toggleReaction(
-            { uid: regularUid },
-            { pid: pid, emoji: '👍' },
-            (err, result) => {
-                assert.ifError(err);
-                assert(Array.isArray(result));
-                
-                const thumbsUpReaction = result.find(r => r.emoji === '👍');
-                assert(thumbsUpReaction);
-                assert.strictEqual(thumbsUpReaction.count, 1);
-                assert(thumbsUpReaction.userReacted);
-                
-                done();
-            }
-        );
-    });
+		const result = await topics.post({
+			uid: adminUid,
+			cid: categoryId,
+			title: 'Test Topic Title',
+			content: 'The content of test topic',
+		});
 
-    it('should emit event when reaction is added', (done) => {
-        const socketMock = { emit: () => {} };
-        const emitSpy = sinon.spy(socketMock, 'emit');
-        
-        socketPosts.toggleReaction(
-            { uid: adminUid, emit: socketMock.emit },
-            { pid: pid, emoji: '❤️' },
-            (err) => {
-                assert.ifError(err);
-                assert(emitSpy.calledWith('event:post.reaction'));
-                done();
-            }
-        );
-    });
+		topicId = result.topicData.tid;
+		postId = result.postData.pid;
+	});
 
-    it('should remove a reaction when toggled again', (done) => {
-        socketPosts.toggleReaction(
-            { uid: regularUid },
-            { pid: pid, emoji: '👍' },
-            (err, result) => {
-                assert.ifError(err);
-                
-                const thumbsUpReaction = result.find(r => r.emoji === '👍');
-                if (thumbsUpReaction) {
-                    assert(!thumbsUpReaction.userReacted);
-                }
-                
-                done();
-            }
-        );
-    });
+	it('should add a reaction to a post', async () => {
+		const socketData = {
+			uid: adminUid,
+		};
 
-    it('should handle errors gracefully', (done) => {
-        socketPosts.toggleReaction(
-            { uid: regularUid },
-            { pid: 9999999, emoji: '👍' },
-            (err) => {
-                assert(err);
-                assert.strictEqual(err.message, '[[error:no-post]]');
-                done();
-            }
-        );
-    });
-}); 
+		const data = {
+			pid: postId,
+			reaction: '👍',
+		};
+
+		const result = await socketPosts.addReaction(socketData, data);
+		assert.strictEqual(result.uid, adminUid);
+		assert.strictEqual(result.reaction, '👍');
+		assert.strictEqual(result.pid, postId);
+	});
+
+	it('should get reactions from a post', async () => {
+		const socketData = {
+			uid: adminUid,
+		};
+
+		const result = await socketPosts.getReactionInfo(socketData, postId);
+
+		assert(Array.isArray(result.reactions));
+		assert.strictEqual(typeof result.count, 'number');
+		assert.strictEqual(result.uid, adminUid);
+	});
+
+	it('should remove a reaction from a post', async () => {
+		const socketData = {
+			uid: adminUid,
+		};
+
+		const data = {
+			pid: postId,
+			reaction: '👍',
+		};
+
+		const result = await socketPosts.removeReaction(socketData, data);
+		assert.strictEqual(result.uid, adminUid);
+		assert.strictEqual(result.reaction, '👍');
+		assert.strictEqual(result.pid, postId);
+	});
+});

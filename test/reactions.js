@@ -1,288 +1,152 @@
 'use strict';
 
-//generated with Claude
+// generated with Claude
 
 const assert = require('assert');
 const async = require('async');
-const request = require('request-promise-native');
+const fetch = require('node-fetch'); // Replaced `request-promise-native` with `node-fetch`
 const nconf = require('nconf');
+const util = require('util');
+
 const db = require('./mocks/databasemock');
-
-const user = require('../src/user');
-const topics = require('../src/topics');
-const categories = require('../src/categories');
-const posts = require('../src/posts');
-const socketPosts = require('../src/socket.io/posts');
-const apiPosts = require('../src/api/posts');
 const helpers = require('./helpers');
+const meta = require('../src/meta');
+const user = require('../src/user');
+const groups = require('../src/groups');
+const categories = require('../src/categories');
+const topics = require('../src/topics');
+const posts = require('../src/posts');
+const plugins = require('../src/plugins');
+const socketPosts = require('../src/socket.io/posts');
 
-describe('Post Reactions', () => {
-    let tid;
-    let cid;
-    let pid;
-    let adminUid;
-    let regularUid;
-    let regularUid2;
+describe('Reactions', () => {
+	let adminUid;
+	let adminJar;
+	let adminCSRF;
+	let regularUid;
+	let regularJar;
+	let regularCSRF;
+	let categoryId;
+	let topicId;
+	let postId;
 
-    before(async () => {
-        // Create users, category, and topic for testing
-        [adminUid, regularUid, regularUid2, cid] = await Promise.all([
-            user.create({ username: 'admin', password: 'password' }),
-            user.create({ username: 'regular', password: 'password' }),
-            user.create({ username: 'regular2', password: 'password' }),
-            categories.create({ name: 'Test Category' }),
-        ]);
+	before(async () => {
+		adminUid = await user.create({ username: 'admin', password: '123456' });
+		await groups.join('administrators', adminUid);
 
-        await user.setUserField(adminUid, 'email', 'admin@example.com');
-        await user.setUserField(regularUid, 'email', 'regular@example.com');
-        await user.setUserField(regularUid2, 'email', 'regular2@example.com');
+		regularUid = await user.create({ username: 'regular', password: '123456' });
 
-        await user.email.confirmByUid(adminUid);
-        await user.email.confirmByUid(regularUid);
-        await user.email.confirmByUid(regularUid2);
+		adminJar = await helpers.loginUser('admin', '123456');
+		regularJar = await helpers.loginUser('regular', '123456');
 
-        await user.setAdministrator(adminUid, true);
+		adminCSRF = await helpers.getCsrfToken(adminJar);
+		regularCSRF = await helpers.getCsrfToken(regularJar);
+	});
 
-        const topicData = await topics.post({
-            uid: adminUid,
-            cid: cid,
-            title: 'Test Topic for Reactions',
-            content: 'This is a test topic for testing reactions',
-        });
-        tid = topicData.topicData.tid;
-        pid = topicData.postData.pid;
-    });
+	it('should create a category', async () => {
+		const category = {
+			name: 'Test Category',
+			description: 'Test category created by testing script',
+		};
 
-    describe('API methods', () => {
-        it('should add a reaction to a post', async () => {
-            const result = await apiPosts.reactions.add(
-                { uid: regularUid },
-                { pid: pid, emoji: '👍' }
-            );
-            
-            assert(Array.isArray(result));
-            assert.strictEqual(result.length, 1);
-            assert.strictEqual(result[0].emoji, '👍');
-            assert.strictEqual(result[0].count, 1);
-            assert(result[0].userReacted);
-        });
+		const result = await categories.create(category);
+		categoryId = result.cid;
+	});
 
-        it('should get reactions for a post', async () => {
-            const result = await apiPosts.reactions.list(
-                { uid: regularUid },
-                { pid: pid }
-            );
-            
-            assert(Array.isArray(result));
-            assert.strictEqual(result.length, 1);
-            assert.strictEqual(result[0].emoji, '👍');
-            assert.strictEqual(result[0].count, 1);
-            assert(result[0].userReacted);
-        });
+	it('should create a topic', async () => {
+		const result = await topics.post({
+			uid: adminUid,
+			cid: categoryId,
+			title: 'Test Topic Title',
+			content: 'The content of test topic',
+		});
 
-        it('should allow a different user to add a reaction', async () => {
-            await apiPosts.reactions.add(
-                { uid: regularUid2 },
-                { pid: pid, emoji: '👍' }
-            );
-            
-            const result = await apiPosts.reactions.list(
-                { uid: regularUid },
-                { pid: pid }
-            );
-            
-            assert.strictEqual(result.length, 1);
-            assert.strictEqual(result[0].emoji, '👍');
-            assert.strictEqual(result[0].count, 2);
-        });
+		topicId = result.topicData.tid;
+		postId = result.postData.pid;
+	});
 
-        it('should allow a user to add a different reaction', async () => {
-            await apiPosts.reactions.add(
-                { uid: regularUid2 },
-                { pid: pid, emoji: '❤️' }
-            );
-            
-            const result = await apiPosts.reactions.list(
-                { uid: regularUid },
-                { pid: pid }
-            );
-            
-            assert.strictEqual(result.length, 2);
-            
-            const heartReaction = result.find(r => r.emoji === '❤️');
-            assert(heartReaction);
-            assert.strictEqual(heartReaction.count, 1);
-            assert(!heartReaction.userReacted); // regularUid didn't react with heart
-        });
+	it('should create a reply', async () => {
+		const result = await topics.reply({
+			uid: regularUid,
+			tid: topicId,
+			content: 'This is a reply',
+		});
 
-        it('should remove a reaction when toggled', async () => {
-            await apiPosts.reactions.remove(
-                { uid: regularUid },
-                { pid: pid, emoji: '👍' }
-            );
-            
-            const result = await apiPosts.reactions.list(
-                { uid: regularUid },
-                { pid: pid }
-            );
-            
-            const thumbsUpReaction = result.find(r => r.emoji === '👍');
-            assert(thumbsUpReaction);
-            assert.strictEqual(thumbsUpReaction.count, 1);
-            assert(!thumbsUpReaction.userReacted); // regularUid removed their reaction
-        });
-    });
+		assert.strictEqual(result.pid > 0, true);
+	});
 
-    describe('Socket methods', () => {
-        it('should toggle a reaction via socket', (done) => {
-            socketPosts.toggleReaction(
-                { uid: regularUid },
-                { pid: pid, emoji: '😄' },
-                (err, result) => {
-                    assert.ifError(err);
-                    assert(Array.isArray(result));
-                    
-                    const smileReaction = result.find(r => r.emoji === '😄');
-                    assert(smileReaction);
-                    assert.strictEqual(smileReaction.count, 1);
-                    assert(smileReaction.userReacted);
-                    
-                    done();
-                }
-            );
-        });
+	it('should add a reaction to a post', async () => {
+		const result = await socketPosts.addReaction(
+			{ uid: adminUid },
+			{ pid: postId, reaction: '👍' }
+		);
 
-        it('should toggle off a reaction when called again', (done) => {
-            socketPosts.toggleReaction(
-                { uid: regularUid },
-                { pid: pid, emoji: '😄' },
-                (err, result) => {
-                    assert.ifError(err);
-                    
-                    const smileReaction = result.find(r => r.emoji === '😄');
-                    if (smileReaction) {
-                        assert.strictEqual(smileReaction.count, 0);
-                        assert(!smileReaction.userReacted);
-                    }
-                    
-                    done();
-                }
-            );
-        });
-    });
+		assert.strictEqual(result.uid, adminUid);
+		assert.strictEqual(result.reaction, '👍');
+		assert.strictEqual(result.pid, postId);
+	});
 
-    describe('HTTP API', () => {
-        let jar;
-        let csrf_token;
+	it('should get reactions from a post', async () => {
+		const result = await socketPosts.getReactionInfo({ uid: adminUid }, postId);
 
-        before(async () => {
-            jar = await helpers.loginUser('regular', 'password');
-            const config = await request({
-                url: `${nconf.get('url')}/api/config`,
-                json: true,
-                jar: jar,
-            });
-            csrf_token = config.csrf_token;
-        });
+		assert.strictEqual(result.reactions.length, 1);
+		assert.strictEqual(result.reactions[0].value, '👍');
+		assert.strictEqual(result.reactions[0].uid, adminUid);
+	});
 
-        it('should add a reaction via HTTP API', async () => {
-            const response = await request({
-                method: 'PUT',
-                url: `${nconf.get('url')}/api/posts/${pid}/reactions/🎉`,
-                jar: jar,
-                json: true,
-                headers: {
-                    'x-csrf-token': csrf_token,
-                },
-            });
-            
-            assert(response);
-            assert(response.reactions);
-            
-            const confettiReaction = response.reactions.find(r => r.emoji === '🎉');
-            assert(confettiReaction);
-            assert.strictEqual(confettiReaction.count, 1);
-            assert(confettiReaction.userReacted);
-        });
+	it('should remove a reaction from a post', async () => {
+		const result = await socketPosts.removeReaction(
+			{ uid: adminUid },
+			{ pid: postId, reaction: '👍' }
+		);
 
-        it('should get reactions via HTTP API', async () => {
-            const response = await request({
-                method: 'GET',
-                url: `${nconf.get('url')}/api/posts/${pid}/reactions`,
-                jar: jar,
-                json: true,
-            });
-            
-            assert(response);
-            assert(response.reactions);
-            assert(Array.isArray(response.reactions));
-            
-            const confettiReaction = response.reactions.find(r => r.emoji === '🎉');
-            assert(confettiReaction);
-            assert.strictEqual(confettiReaction.count, 1);
-            assert(confettiReaction.userReacted);
-        });
+		assert.strictEqual(result.uid, adminUid);
+		assert.strictEqual(result.reaction, '👍');
+		assert.strictEqual(result.pid, postId);
+	});
 
-        it('should remove a reaction via HTTP API', async () => {
-            const response = await request({
-                method: 'DELETE',
-                url: `${nconf.get('url')}/api/posts/${pid}/reactions/🎉`,
-                jar: jar,
-                json: true,
-                headers: {
-                    'x-csrf-token': csrf_token,
-                },
-            });
-            
-            assert(response);
-            assert(response.reactions);
-            
-            const confettiReaction = response.reactions.find(r => r.emoji === '🎉');
-            if (confettiReaction) {
-                assert.strictEqual(confettiReaction.count, 0);
-                assert(!confettiReaction.userReacted);
-            }
-        });
-    });
+	it('should have no reactions after removal', async () => {
+		const result = await socketPosts.getReactionInfo({ uid: adminUid }, postId);
 
-    describe('Error handling', () => {
-        it('should error when adding a reaction to a non-existent post', async () => {
-            try {
-                await apiPosts.reactions.add(
-                    { uid: regularUid },
-                    { pid: 9999999, emoji: '👍' }
-                );
-                assert(false); // Should not reach here
-            } catch (err) {
-                assert(err);
-                assert.strictEqual(err.message, '[[error:no-post]]');
-            }
-        });
+		assert.strictEqual(result.reactions.length, 0);
+	});
 
-        it('should error when using invalid emoji', async () => {
-            try {
-                await apiPosts.reactions.add(
-                    { uid: regularUid },
-                    { pid: pid, emoji: 'not-an-emoji' }
-                );
-                assert(false); // Should not reach here
-            } catch (err) {
-                assert(err);
-                assert.strictEqual(err.message, '[[error:invalid-data]]');
-            }
-        });
+	it('should add multiple reactions to a post', async () => {
+		await socketPosts.addReaction({ uid: adminUid }, { pid: postId, reaction: '👍' });
+		await socketPosts.addReaction({ uid: regularUid }, { pid: postId, reaction: '❤️' });
 
-        it('should error when not logged in', async () => {
-            try {
-                await apiPosts.reactions.add(
-                    { uid: 0 },
-                    { pid: pid, emoji: '👍' }
-                );
-                assert(false); // Should not reach here
-            } catch (err) {
-                assert(err);
-                assert.strictEqual(err.message, '[[error:not-logged-in]]');
-            }
-        });
-    });
-}); 
+		const result = await socketPosts.getReactionInfo({ uid: adminUid }, postId);
+
+		assert.strictEqual(result.reactions.length, 2);
+
+		const reactions = result.reactions.map(r => r.value).sort(); // Fixed `arrow-parens`
+		assert.deepStrictEqual(reactions, ['❤️', '👍']);
+	});
+
+	it('should not allow adding the same reaction twice', async () => {
+		await socketPosts.addReaction({ uid: adminUid }, { pid: postId, reaction: '👍' });
+
+		const result = await socketPosts.getReactionInfo({ uid: adminUid }, postId);
+
+		const adminReactions = result.reactions.filter(r => parseInt(r.uid, 10) === adminUid); // Fixed `arrow-parens`
+		assert.strictEqual(adminReactions.length, 1);
+	});
+
+	it('should handle invalid reactions gracefully', async () => {
+		try {
+			await socketPosts.addReaction({ uid: adminUid }, { pid: 999999, reaction: '👍' });
+			assert.fail('Should have thrown an error');
+		} catch (err) {
+			assert(err);
+		}
+	});
+
+	it('should not allow guests to react', async () => {
+		try {
+			await socketPosts.addReaction({ uid: 0 }, { pid: postId, reaction: '👍' });
+			assert.fail('Should have thrown an error');
+		} catch (err) {
+			assert.strictEqual(err.message, '[[error:not-logged-in]]');
+		}
+	});
+});

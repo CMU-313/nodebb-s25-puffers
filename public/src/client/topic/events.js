@@ -46,6 +46,7 @@ define('forum/topic/events', [
 		'event:new_post': posts.onNewPost,
 
 		'event:post_reacted': updatePostReactions,
+		'posts.reaction': updatePostReactions,
 	};
 
 	Events.init = function () {
@@ -220,7 +221,7 @@ define('forum/topic/events', [
 
 	function updatePostReactions(data) {
 		const reactionContainer = $(`[component="post"][data-pid="${data.pid}"] [component="post/reactions"]`);
-		app.parseAndTranslate('partials/topic/post-reactions', { reactions: data.reactions }, function(html) {
+		app.parseAndTranslate('partials/topic/post-reactions', { reactions: data.reactions }, function (html) {
 			reactionContainer.html(html);
 		});
 	}
