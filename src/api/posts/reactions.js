@@ -1,39 +1,89 @@
 'use strict';
 
 const db = require('../../database');
+const posts = require('../../posts');
+const privileges = require('../../privileges');
 
-const Reactions = module.exports;
+const api = module.exports;
 
-Reactions.add = async function (pid, uid, reaction) {
-	await db.setAdd(`pid:${pid}:reactions:${reaction}`, uid);
-	await db.sortedSetAdd(`pid:${pid}:reactions`, Date.now(), `${reaction}:${uid}`);
+const validReactions = ['👍', '❤️', '😄', '😮', '😢', '😡'];
 
-	return { pid, uid, reaction };
-};
+function isValidReaction(reaction) {
+	return validReactions.includes(reaction);
+}
 
-Reactions.remove = async function (pid, uid, reaction) {
-	await db.setRemove(`pid:${pid}:reactions:${reaction}`, uid);
-	await db.sortedSetRemove(`pid:${pid}:reactions`, `${reaction}:${uid}`);
-
-	return { pid, uid, reaction };
-};
-
-Reactions.get = async function (pid) {
-	const reactions = await db.getSortedSetRange(`pid:${pid}:reactions`, 0, -1);
-
-	if (!reactions.length) {
-		return [];
+api.add = async function (pid, uid, reaction) {
+	if (!reaction || !isValidReaction(reaction)) {
+		throw new Error('[[error:invalid-reaction]]');
 	}
 
-	const reactionData = reactions
-		.filter(reaction => reaction) // Removed trailing spaces
-		.map((reaction) => { // Removed trailing spaces
-			const [reactionName, uidValue] = reaction.split(':');
-			return {
-				value: reactionName,
-				uid: uidValue,
-			};
-		});
+	const canReact = await privileges.posts.can('posts:react', pid, uid);
+	if (!canReact) {
+		throw new Error('[[error:no-privileges]]');
+	}
 
-	return reactionData;
+	const reactionKey = `post:${pid}:reactions`;
+	const userReactionKey = `post:${pid}:reactions:${uid}`;
+	const exists = await db.exists(userReactionKey);
+
+	if (exists) {
+		await db.delete(userReactionKey);
+		await db.sortedSetIncrBy(reactionKey, -1, reaction);
+	}
+
+	await db.set(userReactionKey, reaction);
+	await db.sortedSetIncrBy(reactionKey, 1, reaction);
+
+	const reactions = await db.getSortedSetWithScores(reactionKey);
+	const postData = await posts.getPostFields(pid, ['tid']);
+
+	return {
+		pid,
+		uid,
+		tid: postData.tid,
+		reaction,
+		reactions: reactions.map(r => ({
+			emoji: r.value,
+			count: r.score,
+		})),
+	};
+};
+
+api.remove = async function (pid, uid, reaction) {
+	if (!reaction || !isValidReaction(reaction)) {
+		throw new Error('[[error:invalid-reaction]]');
+	}
+
+	const userReactionKey = `post:${pid}:reactions:${uid}`;
+	const exists = await db.exists(userReactionKey);
+
+	if (!exists) {
+		return;
+	}
+
+	const reactionKey = `post:${pid}:reactions`;
+	await db.delete(userReactionKey);
+	await db.sortedSetIncrBy(reactionKey, -1, reaction);
+
+	const postData = await posts.getPostFields(pid, ['tid']);
+
+	return {
+		pid,
+		uid,
+		tid: postData.tid,
+		reaction,
+	};
+};
+
+api.get = async function (pid) {
+	const reactionKey = `post:${pid}:reactions`;
+	const reactions = await db.getSortedSetWithScores(reactionKey);
+
+	return {
+		pid,
+		reactions: reactions.map(r => ({
+			emoji: r.value,
+			count: r.score,
+		})),
+	};
 };
