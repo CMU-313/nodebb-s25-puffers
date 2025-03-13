@@ -103,20 +103,42 @@ global.env = process.env.NODE_ENV || 'production';
 prestart.setupWinston();
 
 // Alternate configuration file support
+// const configFile = path.resolve(paths.baseDir, nconf.get('config') || 'config.json');
+// const configExists = file.existsSync(configFile) || (nconf.get('url') && nconf.get('secret') && nconf.get('database'));
+
+// prestart.loadConfig(configFile);
+// prestart.versionCheck();
+
+// if (!configExists && process.argv[2] !== 'setup') {
+// 	require('./setup').webInstall();
+// 	return;
+// }
+
+// if (configExists) {
+// 	process.env.CONFIG = configFile;
+// }
+
+
+//code change by evelyn
 const configFile = path.resolve(paths.baseDir, nconf.get('config') || 'config.json');
 const configExists = file.existsSync(configFile) || (nconf.get('url') && nconf.get('secret') && nconf.get('database'));
 
 prestart.loadConfig(configFile);
 prestart.versionCheck();
 
-if (!configExists && process.argv[2] !== 'setup') {
-	require('./setup').webInstall();
-	return;
+function checkAndSetup() {
+    if (!configExists && process.argv[2] !== 'setup') {
+        require('./setup').webInstall();
+        return;  // ✅ Now inside a function, so no syntax error
+    }
 }
 
+checkAndSetup();
+
 if (configExists) {
-	process.env.CONFIG = configFile;
+    process.env.CONFIG = configFile;
 }
+
 
 // running commands
 program

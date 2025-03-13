@@ -12,7 +12,12 @@
 		{ "hook": "filter:teasers.configureStripTags", "method": "filterTeasersConfigureStripTags"}
 	],
 	"scripts": [
-		"public/harmony.js"
+		"public/harmony.js",
+		"public/darkmode.js",
+		"public/styles/darkmode.css"
+	],
+	"css": [
+		"public/styles/darkmode.css"
 	],
 	"modules": {
 		"../admin/plugins/harmony.js": "public/admin.js",

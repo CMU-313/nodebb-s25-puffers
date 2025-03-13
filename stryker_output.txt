@@ -1,0 +1,23 @@
+[33m14:23:35 (34493) WARN OptionsValidator[39m Unknown stryker config option "sandbox".
+[33m14:23:35 (34493) WARN OptionsValidator[39m Possible causes:
+     * Is it a typo on your end?
+     * Did you only write this property as a comment? If so, please postfix it with "_comment".
+     * You might be missing a plugin that is supposed to use it. Stryker loaded plugins from: ["@stryker-mutator/*"]
+     * The plugin that is using it did not contribute explicit validation. 
+     (disable "warnings.unknownOptions" to ignore this warning)
+[32m14:23:35 (34493) INFO ProjectReader[39m Found 548 of 10828 file(s) to be mutated.
+[32m14:23:38 (34493) INFO Instrumenter[39m Instrumented 548 source file(s) with 55842 mutant(s)
+[32m14:23:39 (34493) INFO ConcurrencyTokenProvider[39m Creating 7 test runner process(es).
+[91m14:23:40 (34493) ERROR Stryker[39m Unexpected error occurred while running Stryker Error: ENOTSUP: operation not supported on socket, copyfile '/Users/evelynlo/nodebb-s25-puffers/build/public/plugins/nodebb-plugin-markdown/styles' -> '/Users/evelynlo/nodebb-s25-puffers/.stryker-tmp/sandbox-oxK0Gt/build/public/plugins/nodebb-plugin-markdown/styles'
+    at async Object.copyFile (node:internal/fs/promises:621:10)
+    at async FileSystemAction.execute (file:///Users/evelynlo/nodebb-s25-puffers/node_modules/@stryker-mutator/core/dist/src/fs/file-system.js:16:28)
+    at async file:///Users/evelynlo/nodebb-s25-puffers/node_modules/@stryker-mutator/core/dist/src/fs/file-system.js:33:9 {
+  errno: -45,
+  code: 'ENOTSUP',
+  syscall: 'copyfile',
+  path: '/Users/evelynlo/nodebb-s25-puffers/build/public/plugins/nodebb-plugin-markdown/styles',
+  dest: '/Users/evelynlo/nodebb-s25-puffers/.stryker-tmp/sandbox-oxK0Gt/build/public/plugins/nodebb-plugin-markdown/styles'
+}
+[32m14:23:40 (34493) INFO Stryker[39m This might be a known problem with a solution documented in our troubleshooting guide.
+[32m14:23:40 (34493) INFO Stryker[39m You can find it at https://stryker-mutator.io/docs/stryker-js/troubleshooting/
+[32m14:23:40 (34493) INFO Stryker[39m Still having trouble figuring out what went wrong? Try `npx stryker run --fileLogLevel trace --logLevel debug` to get some more info.
