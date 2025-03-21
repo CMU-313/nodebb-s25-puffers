@@ -4,9 +4,12 @@
     "strict": false,
     "eqeqeq": false,
     "laxcomma": true,
-    "esversion": 6,
+    "esversion": 10,
     "node": true,
     "browser": true,
     "sub": true,
-    "asi": true
+    "asi": true,
+    "expr": true,
+    "maxerr": 1000,
+    "predef": ["console", "module", "exports", "it", "describe"]
   }
