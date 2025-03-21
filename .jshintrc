@@ -3,7 +3,10 @@
     "unused": false,
     "strict": false,
     "eqeqeq": false,
+    "laxcomma": true,
     "esversion": 6,
     "node": true,
-    "browser": true
-}
+    "browser": true,
+    "sub": true,
+    "asi": true
+  }
