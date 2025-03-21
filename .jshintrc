@@ -1,8 +1,12 @@
 {
-    "esversion": 6,
-    "curly": true,
+    "strict": true,
     "eqeqeq": true,
     "undef": true,
     "unused": true,
-    "node": true
+    "node": true,
+    "esversion": 6,
+    "browser": true,
+    "devel": true,
+    "laxcomma": false,
+    "maxerr": 10
 }
