@@ -1,0 +1,22 @@
+name: JSHint Code Linting
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install JSHint
+        run: npm install -g jshint
+
+      - name: Run JSHint
+        run: jshint .
