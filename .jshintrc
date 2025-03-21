@@ -1,12 +1,9 @@
 {
-    "strict": true,
-    "eqeqeq": true,
-    "undef": true,
-    "unused": true,
-    "node": true,
+    "undef": false,
+    "unused": false,
+    "strict": false,
+    "eqeqeq": false,
     "esversion": 6,
-    "browser": true,
-    "devel": true,
-    "laxcomma": false,
-    "maxerr": 10
+    "node": true,
+    "browser": true
 }
