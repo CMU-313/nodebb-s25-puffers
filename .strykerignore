@@ -1,3 +1,3 @@
-build/
-public/
-plugins/
+build/public/plugins/**
+build/public/**
+public/**
