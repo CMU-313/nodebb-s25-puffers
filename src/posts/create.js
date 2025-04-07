@@ -21,12 +21,11 @@ module.exports = function (Posts) {
 		const content = data.content.toString();
 		const timestamp = data.timestamp || Date.now();
 		const isMain = data.isMain || false;
-		const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
 		const [isEnglish, translatedContent] = await translate.translate(data)
 
 		if (!uid && parseInt(uid, 10) !== 0) {
 			throw new Error('[[error:invalid-uid]]');
-		};
+		}
 
 		if (data.toPid) {
 			await checkToPid(data.toPid, uid);
@@ -39,7 +38,8 @@ module.exports = function (Posts) {
 			tid: tid,
 			content: content,
 			timestamp: timestamp,
-			wordCount: wordCount,
+			translatedContent: translatedContent,
+			isEnglish: isEnglish,
 		};
 
 		if (data.toPid) {
