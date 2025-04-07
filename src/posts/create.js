@@ -26,13 +26,7 @@ module.exports = function (Posts) {
 
 		if (!uid && parseInt(uid, 10) !== 0) {
 			throw new Error('[[error:invalid-uid]]');
-			
-			tid: tid,
-			content: content,
-			timestamp: timestamp,
-			translatedContent: translatedContent,
-			isEnglish: isEnglish,
-		};
+		}
 
 		if (data.toPid) {
 			await checkToPid(data.toPid, uid);
