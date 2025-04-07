@@ -30,7 +30,7 @@
       (guard((context != null && context['posts'] != null) ? context['posts']['navigatorIgnore'] : null) ?
         " data-navigator-ignore=\"1\"" :
         "") + 
-      " itemprop=\"comment\" itemtype=\"http://schema.org/Comment\" itemscope";
+      " itemprop=\"comment\" itemtype=\"http://schema.org/Comment\" itemscop";
   }
 
   compiled.blocks = {

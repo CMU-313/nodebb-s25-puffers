@@ -1075,3 +1075,795 @@ require(['translator', 'bootbox'], function (shim, bootbox) {
 	});
 });
 
+
+;'use strict';
+
+$(document).ready(function () {
+	setupSkinSwitcher();
+	setupNProgress();
+	setupMobileMenu();
+	setupSearch();
+	setupDrafts();
+	handleMobileNavigator();
+	setupNavTooltips();
+	fixPlaceholders();
+	fixSidebarOverflow();
+
+	function setupSkinSwitcher() {
+		$('[component="skinSwitcher"]').on('click', '.dropdown-item', function () {
+			const skin = $(this).attr('data-value');
+			$('[component="skinSwitcher"] .dropdown-item .fa-check').addClass('invisible');
+			$(this).find('.fa-check').removeClass('invisible');
+			require(['forum/account/settings', 'hooks'], function (accountSettings, hooks) {
+				hooks.one('action:skin.change', function () {
+					$('[component="skinSwitcher"] [component="skinSwitcher/icon"]').removeClass('fa-fade');
+				});
+				$('[component="skinSwitcher"] [component="skinSwitcher/icon"]').addClass('fa-fade');
+				accountSettings.changeSkin(skin);
+			});
+		});
+	}
+
+	require(['hooks'], function (hooks) {
+		$(window).on('action:composer.resize action:sidebar.toggle', function () {
+			const isRtl = $('html').attr('data-dir') === 'rtl';
+			const css = {
+				width: $('#panel').width(),
+			};
+			const sidebarEl = $('.sidebar-left');
+			css[isRtl ? 'right' : 'left'] = sidebarEl.is(':visible') ? sidebarEl.outerWidth(true) : 0;
+			$('[component="composer"]').css(css);
+		});
+
+		hooks.on('filter:chat.openChat', function (hookData) {
+			// disables chat modals & goes straight to chat page based on user setting
+			hookData.modal = config.theme.chatModals && !utils.isMobile();
+			return hookData;
+		});
+	});
+
+	function setupMobileMenu() {
+		require(['hooks', 'api', 'navigator'], function (hooks, api, navigator) {
+			$('[component="sidebar/toggle"]').on('click', async function () {
+				const sidebarEl = $('.sidebar');
+				sidebarEl.toggleClass('open');
+				if (app.user.uid) {
+					await api.put(`/users/${app.user.uid}/settings`, {
+						settings: {
+							openSidebars: sidebarEl.hasClass('open') ? 'on' : 'off',
+						},
+					});
+				}
+				$(window).trigger('action:sidebar.toggle');
+				if (ajaxify.data.template.topic) {
+					hooks.fire('action:navigator.update', { newIndex: navigator.getIndex() });
+				}
+			});
+
+			const bottomBar = $('[component="bottombar"]');
+			const $body = $('body');
+			const $window = $(window);
+			$body.on('shown.bs.dropdown hidden.bs.dropdown', '.sticky-tools', function () {
+				bottomBar.toggleClass('hidden', $(this).find('.dropdown-menu.show').length);
+			});
+			function isSearchVisible() {
+				return !!$('[component="bottombar"] [component="sidebar/search"] .search-dropdown.show').length;
+			}
+
+			let lastScrollTop = 0;
+			let newPostsLoaded = false;
+
+			function onWindowScroll() {
+				const st = $window.scrollTop();
+				if (newPostsLoaded) {
+					newPostsLoaded = false;
+					lastScrollTop = st;
+					return;
+				}
+				if (st !== lastScrollTop && !navigator.scrollActive && !isSearchVisible()) {
+					const diff = Math.abs(st - lastScrollTop);
+					const scrolledDown = st > lastScrollTop;
+					const scrolledUp = st < lastScrollTop;
+					if (diff > 5) {
+						bottomBar.css({
+							bottom: !scrolledUp && scrolledDown ?
+								-bottomBar.find('.bottombar-nav').outerHeight(true) :
+								0,
+						});
+					}
+				}
+				lastScrollTop = st;
+			}
+
+			const delayedScroll = utils.throttle(onWindowScroll, 250);
+			function enableAutohide() {
+				$window.off('scroll', delayedScroll);
+				if (config.theme.autohideBottombar) {
+					lastScrollTop = $window.scrollTop();
+					$window.on('scroll', delayedScroll);
+				}
+			}
+
+			hooks.on('action:posts.loading', function () {
+				$window.off('scroll', delayedScroll);
+			});
+			hooks.on('action:posts.loaded', function () {
+				newPostsLoaded = true;
+				setTimeout(enableAutohide, 250);
+			});
+			hooks.on('action:ajaxify.end', function () {
+				$window.off('scroll', delayedScroll);
+				bottomBar.css({ bottom: 0 });
+				setTimeout(enableAutohide, 250);
+			});
+		});
+	}
+
+	function setupSearch() {
+		$('[component="sidebar/search"]').on('shown.bs.dropdown', function () {
+			$(this).find('[component="search/fields"] input[name="query"]').trigger('focus');
+		});
+	}
+
+	function setupDrafts() {
+		require(['composer/drafts', 'bootbox'], function (drafts, bootbox) {
+			const draftsEl = $('[component="sidebar/drafts"]');
+
+			function updateBadgeCount() {
+				const count = drafts.getAvailableCount();
+				if (count > 0) {
+					draftsEl.removeClass('hidden');
+				}
+				$('[component="drafts/count"]').toggleClass('hidden', count <= 0).text(count);
+			}
+
+			async function renderDraftList() {
+				const draftListEl = $('[component="drafts/list"]');
+				const draftItems = drafts.listAvailable();
+				if (!draftItems.length) {
+					draftListEl.find('.no-drafts').removeClass('hidden');
+					draftListEl.find('.placeholder-wave').addClass('hidden');
+					draftListEl.find('.draft-item-container').html('');
+					return;
+				}
+				draftItems.reverse().forEach((draft) => {
+					if (draft) {
+						if (draft.title) {
+							draft.title = utils.escapeHTML(String(draft.title));
+						}
+						draft.text = utils.escapeHTML(
+							draft.text
+						).replace(/(?:\r\n|\r|\n)/g, '<br>');
+					}
+				});
+
+				const html = await app.parseAndTranslate('partials/sidebar/drafts', 'drafts', { drafts: draftItems });
+				draftListEl.find('.no-drafts').addClass('hidden');
+				draftListEl.find('.placeholder-wave').addClass('hidden');
+				draftListEl.find('.draft-item-container').html(html).find('.timeago').timeago();
+			}
+
+
+			draftsEl.on('shown.bs.dropdown', renderDraftList);
+
+			draftsEl.on('click', '[component="drafts/open"]', function () {
+				drafts.open($(this).attr('data-save-id'));
+			});
+
+			draftsEl.on('click', '[component="drafts/delete"]', function () {
+				const save_id = $(this).attr('data-save-id');
+				bootbox.confirm('[[modules:composer.discard-draft-confirm]]', function (ok) {
+					if (ok) {
+						drafts.removeDraft(save_id);
+						renderDraftList();
+					}
+				});
+				return false;
+			});
+
+			$(window).on('action:composer.drafts.save', updateBadgeCount);
+			$(window).on('action:composer.drafts.remove', updateBadgeCount);
+			updateBadgeCount();
+		});
+	}
+
+	function setupNProgress() {
+		require(['nprogress'], function (NProgress) {
+			window.nprogress = NProgress;
+			if (NProgress) {
+				$(window).on('action:ajaxify.start', function () {
+					NProgress.set(0.7);
+				});
+
+				$(window).on('action:ajaxify.end', function () {
+					NProgress.done(true);
+				});
+			}
+		});
+	}
+
+	function handleMobileNavigator() {
+		const paginationBlockEl = $('.pagination-block');
+		require(['hooks'], function (hooks) {
+			hooks.on('action:ajaxify.end', function () {
+				paginationBlockEl.find('.dropdown-menu.show').removeClass('show');
+			});
+			hooks.on('filter:navigator.scroll', function (hookData) {
+				paginationBlockEl.find('.dropdown-menu.show').removeClass('show');
+				return hookData;
+			});
+		});
+	}
+
+	function setupNavTooltips() {
+		// remove title from user icon in sidebar to prevent double tooltip
+		$('.sidebar [component="header/avatar"] .avatar').removeAttr('title');
+		const tooltipEls = $('.sidebar [title]');
+		const lefttooltipEls = $('.sidebar-left [title]');
+		const rightooltipEls = $('.sidebar-right [title]');
+		const isRtl = $('html').attr('data-dir') === 'rtl';
+		lefttooltipEls.tooltip({
+			trigger: 'manual',
+			animation: false,
+			placement: isRtl ? 'left' : 'right',
+		});
+		rightooltipEls.tooltip({
+			trigger: 'manual',
+			animation: false,
+			placement: isRtl ? 'right' : 'left',
+		});
+
+		tooltipEls.on('mouseenter', function (ev) {
+			const target = $(ev.target);
+			const isDropdown = target.hasClass('dropdown-menu') || !!target.parents('.dropdown-menu').length;
+			if (!$('.sidebar').hasClass('open') && !isDropdown) {
+				$(this).tooltip('show');
+			}
+		});
+		tooltipEls.on('click mouseleave', function () {
+			$(this).tooltip('hide');
+		});
+	}
+
+	function fixPlaceholders() {
+		if (!config.loggedIn) {
+			return;
+		}
+		['notifications', 'chat'].forEach((type) => {
+			const countEl = document.querySelector(`[component="${type}/count"]`);
+			if (!countEl) {
+				return;
+			}
+			const count = parseInt(countEl.innerText, 10);
+			if (count > 1) {
+				const listEls = document.querySelectorAll(`[component="${type}/list"]`);
+				listEls.forEach((listEl) => {
+					const placeholder = listEl.querySelector('*');
+					if (placeholder) {
+						for (let x = 0; x < count - 1; x++) {
+							const cloneEl = placeholder.cloneNode(true);
+							listEl.insertBefore(cloneEl, placeholder);
+						}
+					}
+				});
+			}
+		});
+	}
+
+	function fixSidebarOverflow() {
+		// overflow-y-auto needs to be removed on main-nav when dropdowns are opened
+		const mainNavEl = $('#main-nav');
+		function toggleOverflow() {
+			mainNavEl.toggleClass(
+				'overflow-y-auto',
+				!mainNavEl.find('.dropdown-menu.show').length
+			);
+		}
+		mainNavEl.on('shown.bs.dropdown', toggleOverflow)
+			.on('hidden.bs.dropdown', toggleOverflow);
+	}
+});
+
+;'use strict';
+
+(function () {
+	require(['markdown', 'components'], (markdown, components) => {
+		async function initHljs() {
+			if (window.hljs) {
+				return;
+			}
+			console.debug('[plugin/markdown] Initializing highlight.js');
+			let hljs;
+			let list;
+			if (config.markdown.hljsLanguages.includes('common')) {
+				({ default: hljs} = await import(`highlight.js/lib/common`));
+				list = 'common';
+			} else if (config.markdown.hljsLanguages.includes('all')) {
+				({ default: hljs} = await import(`highlight.js`));
+				list = 'all';
+			} else {
+				({ default: hljs} = await import(`highlight.js/lib/core`));
+				list = 'core';
+			}
+
+			console.debug(`[plugins/markdown] Loaded ${list} hljs library`);
+
+			if (list !== 'all') {
+				await Promise.all(config.markdown.hljsLanguages.map(async (language) => {
+					if (['common', 'all'].includes(language)) {
+						return;
+					}
+
+					console.debug(`[plugins/markdown] Loading ${language} support`);
+					const { default: lang } = await import('../../node_modules/highlight.js/lib/languages/' + language + '.js');
+					hljs.registerLanguage(language, lang);
+				}));
+			}
+			window.hljs = hljs;
+			markdown.buildAliasMap();
+		}
+
+		$(window).on('action:composer.enhanced', function (evt, data) {
+			var textareaEl = data.postContainer.find('textarea');
+			markdown.capturePaste(textareaEl);
+			markdown.prepareFormattingTools();
+		});
+
+		$(window).on('action:composer.preview', {
+			selector: '.composer .preview pre code',
+		}, async (params) => {
+			await initHljs();
+			markdown.highlight(params)
+		});
+
+		$(window).on('action:posts.loaded action:topic.loaded action:posts.edited', async function (ev, data) {
+			await initHljs();
+			markdown.highlight(components.get('post/content').find('pre code'));
+			markdown.enhanceCheckbox(ev, data);
+			markdown.markExternalLinks();
+		});
+	});
+}());
+
+;'use strict';
+
+$(document).ready(function () {
+	$(window).on('action:app.load', function () {
+		require(['composer/drafts'], function (drafts) {
+			drafts.migrateGuest();
+			drafts.loadOpen();
+		});
+	});
+
+	$(window).on('action:composer.topic.new', function (ev, data) {
+		if (config['composer-default'].composeRouteEnabled !== 'on') {
+			require(['composer'], function (composer) {
+				composer.newTopic({
+					cid: data.cid,
+					title: data.title || '',
+					body: data.body || '',
+					tags: data.tags || [],
+				});
+			});
+		} else {
+			ajaxify.go(
+				'compose?cid=' + data.cid +
+				(data.title ? '&title=' + encodeURIComponent(data.title) : '') +
+				(data.body ? '&body=' + encodeURIComponent(data.body) : '')
+			);
+		}
+	});
+
+	$(window).on('action:composer.post.edit', function (ev, data) {
+		if (config['composer-default'].composeRouteEnabled !== 'on') {
+			require(['composer'], function (composer) {
+				composer.editPost({ pid: data.pid });
+			});
+		} else {
+			ajaxify.go('compose?pid=' + data.pid);
+		}
+	});
+
+	$(window).on('action:composer.post.new', function (ev, data) {
+		// backwards compatibility
+		data.body = data.body || data.text;
+		data.title = data.title || data.topicName;
+		if (config['composer-default'].composeRouteEnabled !== 'on') {
+			require(['composer'], function (composer) {
+				composer.newReply({
+					tid: data.tid,
+					toPid: data.pid,
+					title: data.title,
+					body: data.body,
+				});
+			});
+		} else {
+			ajaxify.go(
+				'compose?tid=' + data.tid +
+				(data.pid ? '&toPid=' + data.pid : '') +
+				(data.title ? '&title=' + encodeURIComponent(data.title) : '') +
+				(data.body ? '&body=' + encodeURIComponent(data.body) : '')
+			);
+		}
+	});
+
+	$(window).on('action:composer.addQuote', function (ev, data) {
+		data.body = data.body || data.text;
+		data.title = data.title || data.topicName;
+		if (config['composer-default'].composeRouteEnabled !== 'on') {
+			require(['composer'], function (composer) {
+				var topicUUID = composer.findByTid(data.tid);
+				composer.addQuote({
+					tid: data.tid,
+					toPid: data.pid,
+					selectedPid: data.selectedPid,
+					title: data.title,
+					username: data.username,
+					body: data.body,
+					uuid: topicUUID,
+				});
+			});
+		} else {
+			ajaxify.go('compose?tid=' + data.tid + '&toPid=' + data.pid + '&quoted=1&username=' + data.username);
+		}
+	});
+
+	$(window).on('action:composer.enhance', function (ev, data) {
+		require(['composer'], function (composer) {
+			composer.enhance(data.container);
+		});
+	});
+});
+
+;/*!
+* screenfull
+* v5.2.0 - 2021-11-03
+* (c) Sindre Sorhus; MIT License
+*/
+(function () {
+	'use strict';
+
+	var document = typeof window !== 'undefined' && typeof window.document !== 'undefined' ? window.document : {};
+	var isCommonjs = typeof module !== 'undefined' && module.exports;
+
+	var fn = (function () {
+		var val;
+
+		var fnMap = [
+			[
+				'requestFullscreen',
+				'exitFullscreen',
+				'fullscreenElement',
+				'fullscreenEnabled',
+				'fullscreenchange',
+				'fullscreenerror'
+			],
+			// New WebKit
+			[
+				'webkitRequestFullscreen',
+				'webkitExitFullscreen',
+				'webkitFullscreenElement',
+				'webkitFullscreenEnabled',
+				'webkitfullscreenchange',
+				'webkitfullscreenerror'
+
+			],
+			// Old WebKit
+			[
+				'webkitRequestFullScreen',
+				'webkitCancelFullScreen',
+				'webkitCurrentFullScreenElement',
+				'webkitCancelFullScreen',
+				'webkitfullscreenchange',
+				'webkitfullscreenerror'
+
+			],
+			[
+				'mozRequestFullScreen',
+				'mozCancelFullScreen',
+				'mozFullScreenElement',
+				'mozFullScreenEnabled',
+				'mozfullscreenchange',
+				'mozfullscreenerror'
+			],
+			[
+				'msRequestFullscreen',
+				'msExitFullscreen',
+				'msFullscreenElement',
+				'msFullscreenEnabled',
+				'MSFullscreenChange',
+				'MSFullscreenError'
+			]
+		];
+
+		var i = 0;
+		var l = fnMap.length;
+		var ret = {};
+
+		for (; i < l; i++) {
+			val = fnMap[i];
+			if (val && val[1] in document) {
+				for (i = 0; i < val.length; i++) {
+					ret[fnMap[0][i]] = val[i];
+				}
+				return ret;
+			}
+		}
+
+		return false;
+	})();
+
+	var eventNameMap = {
+		change: fn.fullscreenchange,
+		error: fn.fullscreenerror
+	};
+
+	var screenfull = {
+		request: function (element, options) {
+			return new Promise(function (resolve, reject) {
+				var onFullScreenEntered = function () {
+					this.off('change', onFullScreenEntered);
+					resolve();
+				}.bind(this);
+
+				this.on('change', onFullScreenEntered);
+
+				element = element || document.documentElement;
+
+				var returnPromise = element[fn.requestFullscreen](options);
+
+				if (returnPromise instanceof Promise) {
+					returnPromise.then(onFullScreenEntered).catch(reject);
+				}
+			}.bind(this));
+		},
+		exit: function () {
+			return new Promise(function (resolve, reject) {
+				if (!this.isFullscreen) {
+					resolve();
+					return;
+				}
+
+				var onFullScreenExit = function () {
+					this.off('change', onFullScreenExit);
+					resolve();
+				}.bind(this);
+
+				this.on('change', onFullScreenExit);
+
+				var returnPromise = document[fn.exitFullscreen]();
+
+				if (returnPromise instanceof Promise) {
+					returnPromise.then(onFullScreenExit).catch(reject);
+				}
+			}.bind(this));
+		},
+		toggle: function (element, options) {
+			return this.isFullscreen ? this.exit() : this.request(element, options);
+		},
+		onchange: function (callback) {
+			this.on('change', callback);
+		},
+		onerror: function (callback) {
+			this.on('error', callback);
+		},
+		on: function (event, callback) {
+			var eventName = eventNameMap[event];
+			if (eventName) {
+				document.addEventListener(eventName, callback, false);
+			}
+		},
+		off: function (event, callback) {
+			var eventName = eventNameMap[event];
+			if (eventName) {
+				document.removeEventListener(eventName, callback, false);
+			}
+		},
+		raw: fn
+	};
+
+	if (!fn) {
+		if (isCommonjs) {
+			module.exports = {isEnabled: false};
+		} else {
+			window.screenfull = {isEnabled: false};
+		}
+
+		return;
+	}
+
+	Object.defineProperties(screenfull, {
+		isFullscreen: {
+			get: function () {
+				return Boolean(document[fn.fullscreenElement]);
+			}
+		},
+		element: {
+			enumerable: true,
+			get: function () {
+				return document[fn.fullscreenElement];
+			}
+		},
+		isEnabled: {
+			enumerable: true,
+			get: function () {
+				// Coerce to boolean in case of old WebKit
+				return Boolean(document[fn.fullscreenEnabled]);
+			}
+		}
+	});
+
+	if (isCommonjs) {
+		module.exports = screenfull;
+	} else {
+		window.screenfull = screenfull;
+	}
+})();
+
+;
+'use strict';
+
+$(document).ready(function () {
+	let groupList = [];
+	let localUserList = [];
+
+	$(window).on('composer:autocomplete:init chat:autocomplete:init', function (ev, data) {
+		loadTopicUsers(data.element);
+
+		if (!groupList.length) {
+			loadGroupList();
+		}
+
+		let slugify;
+		const strategy = {
+			match: /\B@([^\s\n]*)?$/,
+			search: function (term, callback) {
+				require(['composer', 'helpers', 'slugify'], function (composer, helpers, _slugify) {
+					slugify = _slugify;
+					let mentions = [];
+					if (!term) {
+						mentions = usersToMentions(sortUsers(localUserList), helpers);
+						return callback(mentions);
+					}
+
+					// Get composer metadata
+					const uuid = data.options.className && data.options.className.match(/dropdown-(.+?)\s/)[1];
+					socket.emit('plugins.mentions.userSearch', {
+						query: term,
+						composerObj: composer.posts[uuid],
+					}, function (err, users) {
+						if (err) {
+							return callback([]);
+						}
+						const termLowerCase = term.toLocaleLowerCase();
+						const localMatches = localUserList.filter(
+							u => u.username.toLocaleLowerCase().startsWith(termLowerCase)
+						);
+
+						// remove local matches from search results
+						users = users.filter(u => !localMatches.find(lu => lu.uid === u.uid));
+						mentions = usersToMentions(sortUsers(localMatches).concat(sortUsers(users)), helpers);
+
+						// Add groups that start with the search term
+						const groupMentions = groupList.filter(function (groupName) {
+							return groupName.toLocaleLowerCase().startsWith(termLowerCase);
+						}).sort(function (a, b) {
+							return a.toLocaleLowerCase() > b.toLocaleLowerCase() ? 1 : -1;
+						});
+						// Add group mentions at the bottom of dropdown
+						mentions = mentions.concat(groupMentions);
+
+						callback(mentions);
+					});
+				});
+			},
+			index: 1,
+			replace: function (mention) {
+				// Strip (fullname) part from mentions
+				mention = mention.replace(/ \(.+\)/, '');
+				mention = $('<div/>').html(mention);
+				// Strip letter avatar
+				mention.find('span').remove();
+				return '@' + slugify(mention.text(), true) + ' ';
+			},
+			cache: true,
+		};
+
+		data.strategies.push(strategy);
+	});
+
+	$(window).on('action:composer.loaded', function (ev, data) {
+		const composer = $('#cmp-uuid-' + data.post_uuid + ' .write');
+		composer.attr('data-mentions', '1');
+	});
+
+	function sortUsers(users) {
+		return users.sort(function (user1, user2) {
+			return user1.username.toLocaleLowerCase() > user2.username.toLocaleLowerCase() ? 1 : -1;
+		});
+	}
+
+	function usersToMentions(users, helpers) {
+		return users.reduce(function (carry, user) {
+			// Don't add current user to suggestions
+			if (app.user.username && app.user.username === user.username) {
+				return carry;
+			}
+
+			// Format suggestions as 'avatar username (fullname)'
+			const avatar = helpers.buildAvatar(user, '24px', true);
+			const fullname = user.fullname ? `(${user.fullname})` : '';
+			carry.push(`${avatar} ${user.username} ${helpers.escape(fullname)}`);
+
+			return carry;
+		}, []);
+	}
+
+	function loadTopicUsers(element) {
+		require(['composer', 'alerts'], function (composer, alerts) {
+			function findTid() {
+				const composerEl = element.parents('.composer').get(0);
+				if (composerEl) {
+					const uuid = composerEl.getAttribute('data-uuid');
+					const composerObj = composer.posts[uuid];
+					if (composerObj && composerObj.tid) {
+						return composerObj.tid;
+					}
+				}
+				if (ajaxify.data.template.topic) {
+					return ajaxify.data.tid;
+				}
+				return null;
+			}
+
+			const tid = findTid();
+			if (!tid) {
+				localUserList = [];
+				return;
+			}
+			socket.emit('plugins.mentions.getTopicUsers', {
+				tid: tid,
+			}, function (err, users) {
+				if (err) {
+					return alerts.error(err);
+				}
+				localUserList = users;
+			});
+		});
+	}
+
+	function loadGroupList() {
+		socket.emit('plugins.mentions.listGroups', function (err, groupNames) {
+			if (err) {
+				require(['alerts'], function (alerts) {
+					alerts.error(err);
+				});
+				return;
+			}
+			groupList = groupNames;
+		});
+	}
+});
+
+;/* eslint-disable */
+
+require(['emoji'], function (emoji) {
+  $(window).on('composer:autocomplete:init chat:autocomplete:init', function (e, data) {
+    emoji.init();
+    data.strategies.push(emoji.strategy);
+  });
+
+  $(window).on('action:chat.loaded', (ev, container) => {
+    const containerEl = $(container);
+    const textarea = containerEl.find('[component="chat/input"]')[0];
+    const addEmojiBtn = containerEl.find('[data-action="emoji"]');
+
+    addEmojiBtn.on('click', (ev) => {
+      require([
+        'emoji-dialog'
+      ], function (emojiDialog) {
+          emojiDialog.toggleForInsert(textarea, 0, 0, ev);
+      });
+    });
+  });
+});

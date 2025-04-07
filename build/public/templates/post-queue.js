@@ -20,7 +20,27 @@
         "\n<div>\n<p class=\"lead\">[[post-queue:public-intro]]</p>\n<p>[[post-queue:public-description]]</p>\n<hr />\n</div>\n") + 
       "\n" + 
       ((!guard((context != null) ? context['singlePost'] : null) && guard((context != null && context['posts'] != null) ? context['posts']['length'] : null)) ?
-        "\n<div class=\"btn-toolbar justify-content-end\">\n<div class=\"me-2\">\n<div component=\"category/dropdown\" class=\"btn-group dropdown-right category-dropdown-container bottom-sheet\">\n</div>\n</div>\n<div class=\"btn-group bottom-sheet\" component=\"post-queue/bulk-actions\">\n<button type=\"button\" class=\"btn btn-outline-secondary dropdown-toggle\" data-bs-toggle=\"dropdown\" autocomplete=\"off\" aria-haspopup=\"true\" aria-expanded=\"false\">\n<i class=\"fa fa-clone\"></i> [[post-queue:bulk-actions]] <span class=\"caret\"></span>\n</button>\n<ul class=\"dropdown-menu dropdown-menu-end\" role=\"menu\">\n" + 
+        "\n<div class=\"btn-toolbar justify-content-end\">\n<div class=\"me-2\">\n<div component=\"category/dropdown\" class=\"btn-group dropdown-right category-dropdown-container bottom-sheet\">\n<button type=\"button\" class=\"btn btn-outline-secondary d-flex gap-2 align-items-baseline dropdown-toggle\" data-bs-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">\n" + 
+          (guard((context != null) ? context['selectedCategory'] : null) ?
+            "\n<span class=\"category-item\">\n" + 
+              __escape(helper(context, helpers, 'buildCategoryIcon', [guard((context != null) ? context['selectedCategory'] : null), "20px", "rounded-circle"])) + 
+              "\n<span class=\"visible-md-inline visible-lg-inline\">" + 
+              __escape(guard((context != null && context['selectedCategory'] != null) ? context['selectedCategory']['name'] : null)) + 
+              "</span>\n</span>\n" :
+            "\n<i class=\"fa fa-fw fa-list\"></i>\n<span class=\"visible-md-inline visible-lg-inline\">[[unread:all-categories]]</span>") + 
+          "\n</button>\n<div component=\"category-selector-search\" class=\"hidden position-absolute\">\n<input type=\"text\" class=\"form-control\" placeholder=\"[[search:type-to-search]]\" autocomplete=\"off\">\n</div>\n<ul component=\"category/list\" class=\"dropdown-menu category-dropdown-menu\" role=\"menu\">\n<li role=\"presentation\" class=\"category\" data-cid=\"all\">\n<a class=\"dropdown-item\" role=\"menuitem\" href=\"" + 
+          (guard((context != null) ? context['allCategoriesUrl'] : null) ?
+            __escape(guard((context != null && context['config'] != null) ? context['config']['relative_path'] : null)) + 
+              "/" + 
+              __escape(guard((context != null) ? context['allCategoriesUrl'] : null)) :
+            "#") + 
+          "\"><i component=\"category/select/icon\" class=\"fa fa-fw fa-check " + 
+          (guard((context != null) ? context['selectedCategory'] : null) ?
+            "invisible" :
+            "") + 
+          "\"></i> [[unread:all-categories]]</a>\n</li>\n" + 
+          compiled.blocks['categoryItems'](helpers, context, guard, iter, helper) + 
+          "\n</ul>\n</div>\n</div>\n<div class=\"btn-group bottom-sheet\" component=\"post-queue/bulk-actions\">\n<button type=\"button\" class=\"btn btn-outline-secondary dropdown-toggle\" data-bs-toggle=\"dropdown\" autocomplete=\"off\" aria-haspopup=\"true\" aria-expanded=\"false\">\n<i class=\"fa fa-clone\"></i> [[post-queue:bulk-actions]] <span class=\"caret\"></span>\n</button>\n<ul class=\"dropdown-menu dropdown-menu-end\" role=\"menu\">\n" + 
           (guard((context != null) ? context['canAccept'] : null) ?
             "\n<li><a class=\"dropdown-item\" href=\"#\" data-action=\"accept-all\" role=\"menuitem\">[[post-queue:accept-all]]</a></li>\n<li><a class=\"dropdown-item\" href=\"#\" data-action=\"accept-selected\" role=\"menuitem\">[[post-queue:accept-selected]]</a></li>\n<li class=\"dropdown-divider\"></li>\n<li><a class=\"dropdown-item\" href=\"#\" data-action=\"reject-all\" role=\"menuitem\">[[post-queue:reject-all]]</a></li>\n<li><a class=\"dropdown-item\" href=\"#\" data-action=\"reject-selected\" role=\"menuitem\">[[post-queue:reject-selected]]</a></li>\n" :
             "\n<li><a class=\"dropdown-item\" href=\"#\" data-action=\"reject-all\">[[post-queue:remove-all]]</a></li>\n<li><a class=\"dropdown-item\" href=\"#\" data-action=\"reject-selected\" role=\"menuitem\">[[post-queue:remove-selected]]</a></li>\n") + 
@@ -36,10 +56,104 @@
           "\n") + 
       "\n" + 
       compiled.blocks['posts'](helpers, context, guard, iter, helper) + 
-      "\n</div>\n</div>\n</div>";
+      "\n</div>\n<nav component=\"pagination\" class=\"pagination-container" + 
+      (guard((context != null && context['pagination'] != null && context['pagination']['pages'] != null) ? context['pagination']['pages']['length'] : null) ?
+        "" :
+        " hidden") + 
+      "\" aria-label=\"[[global:pagination]]\">\n<ul class=\"pagination hidden-xs justify-content-center\">\n<li class=\"page-item previous float-start" + 
+      (guard((context != null && context['pagination'] != null && context['pagination']['prev'] != null) ? context['pagination']['prev']['active'] : null) ?
+        "" :
+        " disabled") + 
+      "\">\n<a class=\"page-link\" href=\"?" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['prev'] != null) ? context['pagination']['prev']['qs'] : null)) + 
+      "\" data-page=\"" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['prev'] != null) ? context['pagination']['prev']['page'] : null)) + 
+      "\" aria-label=\"[[global:pagination.previouspage]]\"><i class=\"fa fa-chevron-left\"></i> </a>\n</li>\n" + 
+      compiled.blocks['pagination.pages'](helpers, context, guard, iter, helper) + 
+      "\n<li class=\"page-item next float-end" + 
+      (guard((context != null && context['pagination'] != null && context['pagination']['next'] != null) ? context['pagination']['next']['active'] : null) ?
+        "" :
+        " disabled") + 
+      "\">\n<a class=\"page-link\" href=\"?" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['next'] != null) ? context['pagination']['next']['qs'] : null)) + 
+      "\" data-page=\"" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['next'] != null) ? context['pagination']['next']['page'] : null)) + 
+      "\" aria-label=\"[[global:pagination.nextpage]]\"><i class=\"fa fa-chevron-right\"></i></a>\n</li>\n</ul>\n<ul class=\"pagination hidden-sm hidden-md hidden-lg justify-content-center\">\n<li class=\"page-item first" + 
+      (guard((context != null && context['pagination'] != null && context['pagination']['prev'] != null) ? context['pagination']['prev']['active'] : null) ?
+        "" :
+        " disabled") + 
+      "\">\n<a class=\"page-link\" href=\"?" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['first'] != null) ? context['pagination']['first']['qs'] : null)) + 
+      "\" data-page=\"1\" aria-label=\"[[global:pagination.firstpage]]\"><i class=\"fa fa-fast-backward\"></i> </a>\n</li>\n<li class=\"page-item previous" + 
+      (guard((context != null && context['pagination'] != null && context['pagination']['prev'] != null) ? context['pagination']['prev']['active'] : null) ?
+        "" :
+        " disabled") + 
+      "\">\n<a class=\"page-link\" href=\"?" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['prev'] != null) ? context['pagination']['prev']['qs'] : null)) + 
+      "\" data-page=\"" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['prev'] != null) ? context['pagination']['prev']['page'] : null)) + 
+      "\" aria-label=\"[[global:pagination.previouspage]]\"><i class=\"fa fa-chevron-left\"></i> </a>\n</li>\n<li component=\"pagination/select-page\" class=\"page-item page select-page\">\n<a class=\"page-link\" href=\"#\" aria-label=\"[[global:pagination.go-to-page]]\">" + 
+      __escape(guard((context != null && context['pagination'] != null) ? context['pagination']['currentPage'] : null)) + 
+      " / " + 
+      __escape(guard((context != null && context['pagination'] != null) ? context['pagination']['pageCount'] : null)) + 
+      "</a>\n</li>\n<li class=\"page-item next" + 
+      (guard((context != null && context['pagination'] != null && context['pagination']['next'] != null) ? context['pagination']['next']['active'] : null) ?
+        "" :
+        " disabled") + 
+      "\">\n<a class=\"page-link\" href=\"?" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['next'] != null) ? context['pagination']['next']['qs'] : null)) + 
+      "\" data-page=\"" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['next'] != null) ? context['pagination']['next']['page'] : null)) + 
+      "\" aria-label=\"[[global:pagination.nextpage]]\"><i class=\"fa fa-chevron-right\"></i></a>\n</li>\n<li class=\"page-item last" + 
+      (guard((context != null && context['pagination'] != null && context['pagination']['next'] != null) ? context['pagination']['next']['active'] : null) ?
+        "" :
+        " disabled") + 
+      "\">\n<a class=\"page-link\" href=\"?" + 
+      __escape(guard((context != null && context['pagination'] != null && context['pagination']['last'] != null) ? context['pagination']['last']['qs'] : null)) + 
+      "\" data-page=\"" + 
+      __escape(guard((context != null && context['pagination'] != null) ? context['pagination']['pageCount'] : null)) + 
+      "\" aria-label=\"[[global:pagination.lastpage]]\"><i class=\"fa fa-fast-forward\"></i> </a>\n</li>\n</ul>\n</nav>\n</div>\n</div>";
   }
 
   compiled.blocks = {
+    'categoryItems': function categoryItems(helpers, context, guard, iter, helper) {
+      var __escape = helpers.__escape;
+      var value = context;
+      return iter(guard((context != null) ? context['categoryItems'] : null), function each(key0, index, length, value) {
+        var key = key0;
+        return "\n<li role=\"presentation\" class=\"category " + 
+          (guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['disabledClass'] : null) ?
+            "disabled" :
+            "") + 
+          "\" data-cid=\"" + 
+          __escape(guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['cid'] : null)) + 
+          "\" data-parent-cid=\"" + 
+          __escape(guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['parentCid'] : null)) + 
+          "\" data-name=\"" + 
+          __escape(guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['name'] : null)) + 
+          "\">\n<a class=\"dropdown-item\" role=\"menuitem\" href=\"#\">" + 
+          __escape(guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['level'] : null)) + 
+          "<i component=\"category/select/icon\" class=\"fa fa-fw fa-check " + 
+          (guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['selected'] : null) ?
+            "" :
+            "invisible") + 
+          "\"></i>\n<span component=\"category-markup\" style=\"" + 
+          (guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['match'] : null) ?
+            "font-weight: bold;" :
+            "") + 
+          "\">\n<div class=\"category-item d-inline-block\">\n" + 
+          (guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['icon'] : null) ?
+            "\n" + 
+              __escape(helper(context, helpers, 'buildCategoryIcon', [guard(value), "24px", "rounded-circle"])) + 
+              "\n" :
+            "") + 
+          "\n" + 
+          __escape(guard((context != null && context['categoryItems'] != null && context['categoryItems'][key0] != null) ? context['categoryItems'][key0]['name'] : null)) + 
+          "\n</div>\n</span>\n</a>\n</li>\n";
+      }, function alt() {
+        return "";
+      });
+    },
     'posts': function posts(helpers, context, guard, iter, helper) {
       var __escape = helpers.__escape;
       var value = context;
@@ -120,6 +234,32 @@
             "\n<button class=\"btn btn-danger btn-sm\" data-action=\"reject\"><i class=\"fa fa-fw fa-times\"></i> [[post-queue:reject]]</button>\n<button class=\"btn btn-info btn-sm\" data-action=\"notify\"><i class=\"fa fa-fw fa-bell-o\"></i> [[post-queue:notify]]</button>\n<button class=\"btn btn-success btn-sm\" data-action=\"accept\"><i class=\"fa fa-fw fa-check\"></i> [[post-queue:accept]] </button>\n" :
             "\n<button class=\"btn btn-danger btn-sm\" data-action=\"reject\"><i class=\"fa fa-fw fa-times\"></i> [[post-queue:remove]]</button>\n") + 
           "\n</div>\n</div>\n</div>\n";
+      }, function alt() {
+        return "";
+      });
+    },
+    'pagination.pages': function paginationpages(helpers, context, guard, iter, helper) {
+      var __escape = helpers.__escape;
+      var value = context;
+      return iter(guard((context != null && context['pagination'] != null) ? context['pagination']['pages'] : null), function each(key0, index, length, value) {
+        var key = key0;
+        return "\n" + 
+          (guard((context != null && context['pagination'] != null && context['pagination']['pages'] != null && context['pagination']['pages'][key0] != null) ? context['pagination']['pages'][key0]['separator'] : null) ?
+            "\n<li component=\"pagination/select-page\" class=\"page-item page select-page\">\n<a class=\"page-link\" href=\"#\" aria-label=\"[[global:pagination.go-to-page]]\"><i class=\"fa fa-ellipsis-h\"></i></a>\n</li>\n" :
+            "\n<li class=\"page-item page" + 
+              (guard((context != null && context['pagination'] != null && context['pagination']['pages'] != null && context['pagination']['pages'][key0] != null) ? context['pagination']['pages'][key0]['active'] : null) ?
+                " active" :
+                "") + 
+              "\" >\n<a class=\"page-link\" href=\"?" + 
+              __escape(guard((context != null && context['pagination'] != null && context['pagination']['pages'] != null && context['pagination']['pages'][key0] != null) ? context['pagination']['pages'][key0]['qs'] : null)) + 
+              "\" data-page=\"" + 
+              __escape(guard((context != null && context['pagination'] != null && context['pagination']['pages'] != null && context['pagination']['pages'][key0] != null) ? context['pagination']['pages'][key0]['page'] : null)) + 
+              "\" aria-label=\"[[global:pagination.page-x, " + 
+              __escape(guard((context != null && context['pagination'] != null && context['pagination']['pages'] != null && context['pagination']['pages'][key0] != null) ? context['pagination']['pages'][key0]['page'] : null)) + 
+              "]]\">" + 
+              __escape(guard((context != null && context['pagination'] != null && context['pagination']['pages'] != null && context['pagination']['pages'][key0] != null) ? context['pagination']['pages'][key0]['page'] : null)) + 
+              "</a>\n</li>\n") + 
+          "\n";
       }, function alt() {
         return "";
       });

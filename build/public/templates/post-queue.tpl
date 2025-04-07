@@ -15,6 +15,38 @@
 <div class="btn-toolbar justify-content-end">
 <div class="me-2">
 <div component="category/dropdown" class="btn-group dropdown-right category-dropdown-container bottom-sheet">
+<button type="button" class="btn btn-outline-secondary d-flex gap-2 align-items-baseline dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+{{{ if selectedCategory }}}
+<span class="category-item">
+{buildCategoryIcon(selectedCategory, "20px", "rounded-circle")}
+<span class="visible-md-inline visible-lg-inline">{selectedCategory.name}</span>
+</span>
+{{{ else }}}
+<i class="fa fa-fw fa-list"></i>
+<span class="visible-md-inline visible-lg-inline">[[unread:all-categories]]</span>{{{ end }}}
+</button>
+<div component="category-selector-search" class="hidden position-absolute">
+<input type="text" class="form-control" placeholder="[[search:type-to-search]]" autocomplete="off">
+</div>
+<ul component="category/list" class="dropdown-menu category-dropdown-menu" role="menu">
+<li role="presentation" class="category" data-cid="all">
+<a class="dropdown-item" role="menuitem" href="{{{ if allCategoriesUrl }}}{config.relative_path}/{allCategoriesUrl}{{{ else }}}#{{{ end }}}"><i component="category/select/icon" class="fa fa-fw fa-check {{{if selectedCategory}}}invisible{{{end}}}"></i> [[unread:all-categories]]</a>
+</li>
+{{{each categoryItems}}}
+<li role="presentation" class="category {{{ if ../disabledClass }}}disabled{{{ end }}}" data-cid="{../cid}" data-parent-cid="{../parentCid}" data-name="{../name}">
+<a class="dropdown-item" role="menuitem" href="#">{../level}<i component="category/select/icon" class="fa fa-fw fa-check {{{ if !../selected }}}invisible{{{ end }}}"></i>
+<span component="category-markup" style="{{{ if ../match }}}font-weight: bold;{{{end}}}">
+<div class="category-item d-inline-block">
+{{{ if ./icon}}}
+{buildCategoryIcon(@value, "24px", "rounded-circle")}
+{{{ end }}}
+{./name}
+</div>
+</span>
+</a>
+</li>
+{{{end}}}
+</ul>
 </div>
 </div>
 <div class="btn-group bottom-sheet" component="post-queue/bulk-actions">
@@ -129,5 +161,43 @@
 </div>
 {{{ end }}}
 </div>
+<nav component="pagination" class="pagination-container<!-- IF !pagination.pages.length --> hidden<!-- ENDIF !pagination.pages.length -->" aria-label="[[global:pagination]]">
+<ul class="pagination hidden-xs justify-content-center">
+<li class="page-item previous float-start<!-- IF !pagination.prev.active --> disabled<!-- ENDIF !pagination.prev.active -->">
+<a class="page-link" href="?{pagination.prev.qs}" data-page="{pagination.prev.page}" aria-label="[[global:pagination.previouspage]]"><i class="fa fa-chevron-left"></i> </a>
+</li>
+{{{each pagination.pages}}}
+<!-- IF pagination.pages.separator -->
+<li component="pagination/select-page" class="page-item page select-page">
+<a class="page-link" href="#" aria-label="[[global:pagination.go-to-page]]"><i class="fa fa-ellipsis-h"></i></a>
+</li>
+<!-- ELSE -->
+<li class="page-item page<!-- IF pagination.pages.active --> active<!-- ENDIF pagination.pages.active -->" >
+<a class="page-link" href="?{pagination.pages.qs}" data-page="{pagination.pages.page}" aria-label="[[global:pagination.page-x, {./page}]]">{pagination.pages.page}</a>
+</li>
+<!-- ENDIF pagination.pages.separator -->
+{{{end}}}
+<li class="page-item next float-end<!-- IF !pagination.next.active --> disabled<!-- ENDIF !pagination.next.active -->">
+<a class="page-link" href="?{pagination.next.qs}" data-page="{pagination.next.page}" aria-label="[[global:pagination.nextpage]]"><i class="fa fa-chevron-right"></i></a>
+</li>
+</ul>
+<ul class="pagination hidden-sm hidden-md hidden-lg justify-content-center">
+<li class="page-item first<!-- IF !pagination.prev.active --> disabled<!-- ENDIF !pagination.prev.active -->">
+<a class="page-link" href="?{pagination.first.qs}" data-page="1" aria-label="[[global:pagination.firstpage]]"><i class="fa fa-fast-backward"></i> </a>
+</li>
+<li class="page-item previous<!-- IF !pagination.prev.active --> disabled<!-- ENDIF !pagination.prev.active -->">
+<a class="page-link" href="?{pagination.prev.qs}" data-page="{pagination.prev.page}" aria-label="[[global:pagination.previouspage]]"><i class="fa fa-chevron-left"></i> </a>
+</li>
+<li component="pagination/select-page" class="page-item page select-page">
+<a class="page-link" href="#" aria-label="[[global:pagination.go-to-page]]">{pagination.currentPage} / {pagination.pageCount}</a>
+</li>
+<li class="page-item next<!-- IF !pagination.next.active --> disabled<!-- ENDIF !pagination.next.active -->">
+<a class="page-link" href="?{pagination.next.qs}" data-page="{pagination.next.page}" aria-label="[[global:pagination.nextpage]]"><i class="fa fa-chevron-right"></i></a>
+</li>
+<li class="page-item last<!-- IF !pagination.next.active --> disabled<!-- ENDIF !pagination.next.active -->">
+<a class="page-link" href="?{pagination.last.qs}" data-page="{pagination.pageCount}" aria-label="[[global:pagination.lastpage]]"><i class="fa fa-fast-forward"></i> </a>
+</li>
+</ul>
+</nav>
 </div>
 </div>
