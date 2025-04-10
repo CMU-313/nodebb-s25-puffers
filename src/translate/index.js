@@ -10,7 +10,6 @@ translatorApi.translate = async function (postData) {
     const client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
-
     const response = await client.responses.create({
       model: 'gpt-4o-mini',
       instructions: `
