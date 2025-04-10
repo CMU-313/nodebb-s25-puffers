@@ -13,6 +13,20 @@ services:
       - nodebb-config:/opt/config
       - ./install/docker/setup.json:/usr/src/app/setup.json
 
+  translator:
+    build:
+      context: ../translator-service
+    command: flask run --host=0.0.0.0
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_APP: app.py 
+      FLASK_ENV: development 
+    volumes:
+      - ../translator-service:/app
+    working_dir: /app
+    restart: unless-stopped
+
   mongo:
     image: 'mongo:7-jammy'
     restart: unless-stopped
@@ -25,6 +39,7 @@ services:
     volumes:
       - mongo-data:/data/db
       - ./install/docker/mongodb-user-init.js:/docker-entrypoint-initdb.d/user-init.js
+
   redis:
     image: redis:7.2.4-alpine
     restart: unless-stopped
