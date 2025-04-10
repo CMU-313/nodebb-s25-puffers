@@ -8,7 +8,7 @@ translatorApi.translate = async function (postData) {
   try {
     // 1) Initialize the OpenAI client
     const client = new OpenAI({
-      apiKey: "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"
+      apiKey: process.env.OPENAI_API_KEY
     });
 
     const response = await client.responses.create({
