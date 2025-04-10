@@ -25,6 +25,7 @@ services:
     volumes:
       - mongo-data:/data/db
       - ./install/docker/mongodb-user-init.js:/docker-entrypoint-initdb.d/user-init.js
+
   redis:
     image: redis:7.2.4-alpine
     restart: unless-stopped
@@ -46,6 +47,20 @@ services:
       - postgres-data:/var/lib/postgresql/data
     profiles:
       - postgres
+
+  translator:
+    build:
+      context: ../translator-service
+    command: flask run --host=0.0.0.0
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_APP: app.py 
+      FLASK_ENV: development 
+    volumes:
+      - ../translator-service:/app
+    working_dir: /app
+    restart: unless-stopped
 
 volumes:
   mongo-data:
