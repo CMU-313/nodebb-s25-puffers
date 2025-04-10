@@ -14,6 +14,7 @@ const translate = require('../translate');
 
 module.exports = function (Posts) {
 	Posts.create = async function (data) {
+		console.log('Post WC');
 		// This is an internal method, consider using Topics.reply instead
 		const { uid } = data;
 		const { tid } = data;

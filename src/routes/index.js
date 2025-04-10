@@ -105,6 +105,10 @@ module.exports = async function (app, middleware) {
 	const router = express.Router();
 	router.render = function (...args) {
 		app.render(...args);
+	router.all('(/+api|/+api/*?)', middleware.prepareAPI);
+	const translate = require('../api/translate');
+	router.use('/api/translate', translate);
+
 	};
 
 	// Allow plugins/themes to mount some routes elsewhere

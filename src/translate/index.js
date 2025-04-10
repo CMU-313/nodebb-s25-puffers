@@ -10,6 +10,7 @@ translatorApi.translate = async function (postData) {
     const client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
+
     const response = await client.responses.create({
       model: 'gpt-4o-mini',
       instructions: `
@@ -22,7 +23,6 @@ translatorApi.translate = async function (postData) {
       input: postData.content
     });
 
-    // `response.output_text` contains the model's text
     const assistantReply = response.output_text || '';
 
     // 3) Parse the GPT output for isEnglish + translatedContent
@@ -38,11 +38,9 @@ translatorApi.translate = async function (postData) {
       }
     }
 
-    // Return the same structure you had before
     return [isEnglish, translatedContent];
 
   } catch (error) {
-    // 4) On error, log and return the fallback
     console.error('Error translating content:', error);
     return [true, postData.content || ''];
   }
